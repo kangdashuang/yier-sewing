@@ -243,7 +243,7 @@ tr:hover td{background:rgba(184,160,136,.03)}
 /* 隐藏文件输入 */
 .fui{display:none}
 </style>
-<script src="https://unpkg.com/parse@5/dist/parse.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 </head>
 <body>
 
@@ -282,14 +282,14 @@ tr:hover td{background:rgba(184,160,136,.03)}
 // 数据层
 // ============================================================
 const SK = 'yier_sewing_v2';
-var _parseReady = false;
+const SB_URL = 'https://nrovvzmtufpugjodmpn.supabase.co';
+const SB_KEY = 'sb_publishable_XilKMDHX8IFdrFVSeES5Hw_b48zj1NU';
+var _sb = null;
 try{
-  if(window.Parse){
-    Parse.initialize('4Qg03NY4wbQSWLxr9OROoTKXHF6qqDg9qppSzJKx', 'ZIKflpNncwQQg1UnChfQk01ZQmRblvHeEzlLSsvR');
-    Parse.serverURL = 'https://parseapi.back4app.com/';
-    _parseReady = true;
+  if(window.supabase && window.supabase.createClient){
+    _sb = window.supabase.createClient(SB_URL, SB_KEY, {db:{schema:'public'}, auth:{persistSession:false, autoRefreshToken:false}});
   }
-}catch(e){ console.error('Parse init failed', e); }
+}catch(e){ console.error('Supabase init failed', e); }
 
 var _syncTimer = null, _syncBusy = false, _syncErr = '';
 
@@ -313,15 +313,16 @@ function svLocal(d){
 }
 
 async function loadCloud(){
-  if(!_parseReady) return null;
+  if(!_sb) return null;
   try{
-    var AppData = Parse.Object.extend('AppData');
-    var q = new Parse.Query(AppData);
-    q.equalTo('key', 'main');
-    var obj = await q.first();
-    if(!obj) return null;
-    var d = obj.get('data');
-    return d ? JSON.parse(d) : null;
+    var {data, error} = await _sb.from('app_data').select('data').eq('id','main').single();
+    if(error){
+      if(error.code === 'PGRST116') return null;
+      _syncErr = (error.message || '') + ' [code:' + (error.code || 'unknown') + ']';
+      setSyncStatus('error');
+      return null;
+    }
+    return data && data.data ? data.data : null;
   }catch(e){
     console.error('loadCloud', e);
     _syncErr = e.message || '加载失败';
@@ -331,21 +332,17 @@ async function loadCloud(){
 }
 
 async function syncCloud(force){
-  if(!_parseReady) return;
+  if(!_sb) return;
   if(_syncBusy && !force){ if(_syncTimer) clearTimeout(_syncTimer); _syncTimer = setTimeout(function(){ syncCloud(true); }, 1200); return; }
   _syncBusy = true; setSyncStatus('syncing');
   try{
-    var AppData = Parse.Object.extend('AppData');
-    var q = new Parse.Query(AppData);
-    q.equalTo('key', 'main');
-    var obj = await q.first();
-    if(!obj){
-      obj = new AppData();
-      obj.set('key', 'main');
+    var {error} = await _sb.from('app_data').upsert({id:'main', data:D, updated_at:new Date().toISOString()}, {onConflict:'id'});
+    if(error){
+      _syncErr = (error.message||'同步失败') + ' [code:'+(error.code||'unknown')+']';
+      setSyncStatus('error');
+    }else{
+      _syncErr = ''; setSyncStatus('ok');
     }
-    obj.set('data', JSON.stringify(D));
-    await obj.save();
-    _syncErr = ''; setSyncStatus('ok');
   }catch(e){
     console.error('syncCloud', e);
     _syncErr = e.message || '同步失败';
@@ -375,33 +372,32 @@ function setSyncStatus(st){
   els.forEach(function(el){ el.textContent = txt; el.title = txt; });
 }
 
-var _pollTimer = null;
 function subCloud(){
-  if(!_parseReady) return;
-  // 每 30 秒轮询一次云端数据
-  if(_pollTimer) clearInterval(_pollTimer);
-  _pollTimer = setInterval(async function(){
-    if(_syncBusy) return;
-    try{
-      var cloud = await loadCloud();
-      if(cloud){
-        var local = ldLocal();
-        var cloudStr = JSON.stringify(cloud);
-        var localStr = local ? JSON.stringify(local) : '';
-        if(cloudStr !== localStr){
-          localStorage.setItem(SK, cloudStr);
-          D = cloud;
-          rp();
+  if(!_sb) return;
+  try{
+    _sb.channel('yier-sewing-sync')
+      .on('postgres_changes', {event:'*', schema:'public', table:'app_data', filter:'id=eq.main'}, function(payload){
+        if(payload.new && payload.new.data){
+          var cloud = payload.new.data;
+          var local = ldLocal();
+          var cloudStr = JSON.stringify(cloud);
+          var localStr = local ? JSON.stringify(local) : '';
+          if(cloudStr !== localStr){
+            localStorage.setItem(SK, cloudStr);
+            D = cloud;
+            rp();
+            ts('数据已同步');
+            setSyncStatus('ok');
+          }
         }
-      }
-    }catch(e){}
-  }, 30000);
+      }).subscribe();
+  }catch(e){ console.error('subCloud', e); }
 }
 
 var D = ld();
 var _initSyncDone = false;
 (function(){
-  if(!_parseReady){ setSyncStatus('offline'); return; }
+  if(!_sb){ setSyncStatus('offline'); return; }
   setSyncStatus('syncing');
   loadCloud().then(function(cloud){
     if(cloud){
