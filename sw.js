@@ -1,4 +1,4 @@
-const CACHE_NAME = 'yier-sewing-v3';
+const CACHE_NAME = 'yier-sewing-v4';
 const ASSETS = [
   './',
   './index.html',

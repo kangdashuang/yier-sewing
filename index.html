@@ -316,8 +316,13 @@ try{
 var _syncTimer = null, _syncBusy = false, _syncErr = '';
 
 function defData(){ return {projects:[], finishedProducts:[], fabrics:[], accessories:[], tools:[], activities:[]}; }
-function ldLocal(){ try{ var r=localStorage.getItem(SK); if(!r) return null; var d=JSON.parse(r); return isValidData(d)?d:null; }catch(e){ return null; } }
-function ld(){ return ldLocal() || defData(); }
+function ldLocal(){ try{ var r=localStorage.getItem(SK); if(!r) return null; var d=JSON.parse(r); if(!isValidData(d)) return null; migrateData(d); return d; }catch(e){ return null; } }
+function ld(){ var d=ldLocal() || defData(); migrateData(d); return d; }
+function migrateData(d){
+  // 兼容旧数据：为项目和成品补充分类字段
+  if(Array.isArray(d.projects)){d.projects.forEach(function(p){if(!p.category)p.category=inferCat(p);})}
+  if(Array.isArray(d.finishedProducts)){d.finishedProducts.forEach(function(fp){if(!fp.projectCategory)fp.projectCategory=inferPCat(fp);})}
+}
 
 function svLocal(d){
   try{
@@ -645,6 +650,24 @@ function flt(it,tm,df){
   return r;
 }
 
+// 旧数据兼容：推断项目/成品分类
+function inferCat(p){
+  if(p.category&&/^(包包类|饰品类|服饰类)$/.test(p.category))return p.category;
+  var t=String(p.type||'');
+  if(/包|袋|钱包|背包/i.test(t))return '包包类';
+  if(/饰|发圈|发饰|扣|链|环|夹/i.test(t))return '饰品类';
+  if(/衣|裙|裤|服|衫|帽|袜/i.test(t))return '服饰类';
+  return '';
+}
+function inferPCat(fp){
+  if(fp.projectCategory&&/^(包包类|饰品类|服饰类)$/.test(fp.projectCategory))return fp.projectCategory;
+  var t=String(fp.projectType||'');
+  if(/包|袋|钱包|背包/i.test(t))return '包包类';
+  if(/饰|发圈|发饰|扣|链|环|夹/i.test(t))return '饰品类';
+  if(/衣|裙|裤|服|衫|帽|袜/i.test(t))return '服饰类';
+  return '';
+}
+
 // ============================================================
 // 全局过滤状态
 // ============================================================
@@ -685,8 +708,8 @@ function rd(m){
   var tc=D.tools.reduce(function(s,t){return s+(parseFloat(t.price)||0)*(t.quantity||1)},0);
   var total=fc+ac+tc;
 
-  // 按类型细分
-  function stByType(arr){return{bag:arr.filter(function(p){return /包包|包袋/i.test(p.type||'')}).length,jewelry:arr.filter(function(p){return /饰品|发圈|发饰/i.test(p.type||'')}).length,cloth:arr.filter(function(p){return /服饰|衣服|裙|裤|衣/i.test(p.type||'')}).length}}
+  // 按作品类型细分
+  function stByType(arr){return{bag:arr.filter(function(p){return inferCat(p)==='包包类'}).length,jewelry:arr.filter(function(p){return inferCat(p)==='饰品类'}).length,cloth:arr.filter(function(p){return inferCat(p)==='服饰类'}).length}}
 
   var sP=stByType(ps), iP=stByType(pi), dP=stByType(pd);
   function stTypeH(b,j,c){return '<div style="display:flex;gap:8px;margin-top:6px;font-size:11px;color:var(--txt-lt);justify-content:center;flex-wrap:wrap"><span>👜'+b+'</span><span>💍'+j+'</span><span>👗'+c+'</span></div>'}
@@ -717,7 +740,7 @@ function rpl(m){
     m.innerHTML='<div class="page ac"><div class="pg-hd"><h1 class="pg-tt">📋 项目列表</h1><p class="pg-sub">规划记录每一次缝纫制作项目</p></div>'+
       '<div class="tb"><input class="fi" id="sProj" placeholder="🔍 搜索项目..." value="'+eh(gs.proj)+'" oninput="gs.proj=this.value;rpl(document.getElementById(\'main\'))"><input class="fi" type="date" id="dProj" value="'+gd.proj+'" onchange="gd.proj=this.value;rpl(document.getElementById(\'main\'))"><button class="btn btn-pri" onclick="opP()">➕ 新建项目</button></div>'+
       (is.length===0?rem('📝','还没有项目，点击上方按钮创建第一个吧'):
-      '<div class="cd" style="padding:0;overflow:hidden"><div class="tbl-w"><table><thead><tr><th>作品类型</th><th>面料</th><th>辅料</th><th>状态</th><th>日期</th><th>操作</th></tr></thead><tbody>'+
+      '<div class="cd" style="padding:0;overflow:hidden"><div class="tbl-w"><table><thead><tr><th>作品类型</th><th>作品名称</th><th>面料</th><th>辅料</th><th>状态</th><th>日期</th><th>操作</th></tr></thead><tbody>'+
       is.map(function(p){
         var fbHTML=p.fabricDetails&&p.fabricDetails.length?'<div style="display:flex;flex-wrap:wrap;gap:6px">'+p.fabricDetails.map(function(fd){
           return '<div style="display:flex;align-items:center;gap:6px;background:var(--side-bg);padding:4px 8px;border-radius:10px;font-size:12px">'+
@@ -729,7 +752,7 @@ function rpl(m){
             (ad.accessoryImage?'<img src="'+ad.accessoryImage+'" style="width:28px;height:28px;object-fit:cover;border-radius:6px;cursor:pointer" onclick="shLb(this.src)">':'<span style="width:28px;height:28px;display:flex;align-items:center;justify-content:center;background:var(--bd-lt);border-radius:6px;font-size:14px">🧷</span>')+
             '<span>'+eh(ad.accessoryName||'未命名')+' ×'+eh(ad.quantity||'')+eh(ad.unit||'')+'</span></div>'
         }).join('')+'</div>':'—';
-        return '<tr><td style="font-weight:600">'+eh(p.type||'—')+'</td><td>'+fbHTML+'</td><td>'+acHTML+'</td>'+
+        return '<tr><td><span class="tag tag-pd">'+eh(p.category||'—')+'</span></td><td style="font-weight:600">'+eh(p.type||'—')+'</td><td>'+fbHTML+'</td><td>'+acHTML+'</td>'+
           '<td><span class="tag tag-'+(p.status==='待开始'?'pd':p.status==='进行中'?'pg':'dn')+'">'+p.status+'</span></td>'+
           '<td>'+(p.createdAt?p.createdAt.slice(0,10):'—')+'</td>'+
           '<td><button class="btn btn-sm" onclick="opP(\''+p.id+'\')">✏️</button>'+
@@ -788,7 +811,8 @@ function opP(eid){
     '</div>';
 
   var fields=[
-    {name:'type',lb:'作品类型',ph:'如：化妆包、零钱包、笔袋、大肠发圈...',type:'text',rq:true},
+    {name:'category',lb:'作品类型',type:'select',op:['包包类','饰品类','服饰类']},
+    {name:'type',lb:'作品名称',ph:'如：化妆包、零钱包、笔袋、大肠发圈、帆布包...',type:'text',rq:true},
     {name:'status',lb:'项目状态',type:'select',op:['待开始','进行中','已完成']}
   ];
 
@@ -869,10 +893,11 @@ function accChg(sel){
 function svP(eid){
   try{
     var fields=[
-      {name:'type',lb:'作品类型'},{name:'status',lb:'项目状态',type:'select'}
+      {name:'category',lb:'作品类型',type:'select'},{name:'type',lb:'作品名称'},{name:'status',lb:'项目状态',type:'select'}
     ];
     var vs=gV(fields);
-    if(!vs.type){ts('请输入作品类型');return}
+    if(!vs.category){ts('请选择作品类型');return}
+    if(!vs.type){ts('请输入作品名称');return}
 
     if(!window._fabOps||!window._allAccForProj){
       ts('页面数据未就绪，请关闭弹窗重新打开');return;
@@ -915,6 +940,7 @@ function svP(eid){
 
     var it={
       id:ex?ex.id:gid(),
+      category:vs.category,
       type:vs.type,
       status:vs.status,
       fabricDetails:fbs,
@@ -926,7 +952,7 @@ function svP(eid){
       var idx=D.projects.indexOf(ex);
       D.projects[idx]=it;
     }else{D.projects.push(it)}
-    addAct('📝',(ex?'更新':'创建')+'项目：'+it.type);
+    addAct('📝',(ex?'更新':'创建')+'项目：'+(it.category?it.category+' · ':'')+it.type);
     sv(D);
 
     // 状态变为已完成 → 弹窗
@@ -945,17 +971,17 @@ function qsP(id,cs){
   var p=D.projects.filter(function(pr){return pr.id===id})[0];
   if(!p)return;
   var os=p.status;p.status=ns;
-  addAct('🔄','项目「'+p.type+'」状态：'+os+' → '+ns);
+  addAct('🔄','项目「'+(p.category?p.category+' · ':'')+p.type+'」状态：'+os+' → '+ns);
   sv(D);
   if(ns==='已完成'&&os!=='已完成'){rp();setTimeout(function(){opFP(id)},400)}else{rp();ts('状态已更新')}
 }
 
 function dlP(id){
   var p=D.projects.filter(function(pr){return pr.id===id})[0];
-  cD('确定要删除项目「'+(p?p.type:'')+'」吗？此操作不可撤销。',function(){
+  cD('确定要删除项目「'+(p?(p.category?p.category+' · ':'')+p.type:'')+'」吗？此操作不可撤销。',function(){
     D.projects=D.projects.filter(function(pr){return pr.id!==id});
     D.finishedProducts=D.finishedProducts.filter(function(fp){return fp.projectId!==id});
-    addAct('🗑️','删除项目：'+(p?p.type:''));
+    addAct('🗑️','删除项目：'+(p?(p.category?p.category+' · ':'')+p.type:''));
     sv(D);rp();ts('项目已删除');
   });
 }
@@ -1009,7 +1035,7 @@ function opFP(pid){
   window._fpFbs=fbs;
   window._fpAcs=acs;
 
-  shMo('🏆 成品归档'+(pj?' — 「'+eh(pj.type)+'」':''),
+  shMo('🏆 成品归档'+(pj?' — 「'+eh(pj.category||'')+' · '+eh(pj.type)+'」':''),
     fbBlock+acBlock+bF(fields,ex||{}),
     '<button class="btn" onclick="clMo()">跳过</button>'+
     '<button class="btn btn-pri" onclick="svFP(\''+pid+'\')">保存</button>');
@@ -1033,10 +1059,13 @@ function svFP(pid){
       Object.assign(ex,vs);
       ex.fabricDetails=fbs;
       ex.accessoryDetails=acs;
+      ex.projectCategory=pj?pj.category:(ex.projectCategory||'');
+      ex.projectType=pj?pj.type:(ex.projectType||'手工录入');
     }else{
       D.finishedProducts.push({
         id:gid(),
         projectId:pid||'',
+        projectCategory:pj?pj.category:'',
         projectType:pj?pj.type:'手工录入',
         images:vs.images||[],
         size:vs.size||'',
@@ -1048,7 +1077,7 @@ function svFP(pid){
         createdAt:new Date().toISOString().slice(0,10)
       });
     }
-    addAct('🏆','成品归档：'+(pj?pj.type:(vs.size||'新作品')));
+    addAct('🏆','成品归档：'+(pj?(pj.category?pj.category+' · ':'')+pj.type:(vs.size||'新作品')));
     sv(D);clMo();rp();ts('成品已归档');
   }catch(err){
     console.error('svFP error',err);
@@ -1057,12 +1086,14 @@ function svFP(pid){
 }
 
 function rpds(m){
-  gs.prod=gs.prod||'';gd.prod=gd.prod||'';
+  gs.prod=gs.prod||'';gd.prod=gd.prod||'';gs.prodCat=gs.prodCat||'all';
+  var cats=[{id:'all',lb:'全部',em:'🏠'},{id:'包包类',lb:'包包类',em:'👜'},{id:'饰品类',lb:'饰品类',em:'💍'},{id:'服饰类',lb:'服饰类',em:'👗'}];
   function dr(){
-    var is=flt(D.finishedProducts,gs.prod,gd.prod);
+    var is=flt(D.finishedProducts,gs.prod,gd.prod).filter(function(fp){return gs.prodCat==='all'||inferPCat(fp)===gs.prodCat});
     m.innerHTML='<div class="page ac"><div class="pg-hd"><h1 class="pg-tt">🏆 成品库</h1><p class="pg-sub">所有已完成的作品归档</p></div>'+
       '<div class="tb"><input class="fi" id="sProd" placeholder="🔍 搜索成品..." value="'+eh(gs.prod)+'" oninput="gs.prod=this.value;rpds(document.getElementById(\'main\'))"><input class="fi" type="date" id="dProd" value="'+gd.prod+'" onchange="gd.prod=this.value;rpds(document.getElementById(\'main\'))"><button class="btn btn-pri" onclick="opFPNew()">✋ 新建成品</button></div>'+
-      (is.length===0?rem('📦','还没有完成的成品，完成项目后会自动归档，也可手动新建成品'):
+      '<div class="cat-tbs">'+cats.map(function(c){return '<button class="cat-tb '+(gs.prodCat===c.id?'ac':'')+'" onclick="gs.prodCat=\''+c.id+'\';rpds(document.getElementById(\'main\'))">'+c.em+' '+c.lb+'</button>'}).join('')+'</div>'+
+      (is.length===0?rem('📦','该分类下还没有成品，完成项目后会自动归档，也可手动新建成品'):
       '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px">'+
       is.map(function(fp){
         var fbHTML='';
@@ -1078,8 +1109,8 @@ function rpds(m){
         var pjLabel=fp.projectId?'<span style="font-size:9px;color:var(--txt-ll);margin-top:6px">📋 项目归档</span>':'<span style="font-size:9px;color:var(--txt-ll);margin-top:6px">✋ 手工录入</span>';
         return '<div class="cd">'+
           (fp.images&&fp.images.length?'<div style="display:flex;gap:6px;margin-bottom:10px;overflow-x:auto;flex-wrap:wrap">'+fp.images.map(function(img){return '<img src="'+img+'" style="width:100px;height:100px;object-fit:cover;border-radius:12px;cursor:pointer" onclick="shLb(this.src)">'}).join('')+'</div>':'<div style="text-align:center;padding:20px;color:var(--txt-ll)">📷 暂无图片</div>')+
-          '<div class="cd-tt"><span class="em">🎨</span>'+eh(fp.projectType||'未知作品')+'</div>'+
-          '<div style="font-size:13px;color:var(--txt-lt);line-height:1.8"><div>📐 尺寸：'+eh(fp.size||'—')+'</div><div>📅 完成：'+(fp.completionDate||'—')+'</div><div>⏱ 时长：'+eh(fp.duration||'—')+'</div>'+
+          '<div class="cd-tt"><span class="em">'+(inferPCat(fp)==='包包类'?'👜':inferPCat(fp)==='饰品类'?'💍':inferPCat(fp)==='服饰类'?'👗':'🎨')+'</span>'+eh(fp.projectType||'未知作品')+'</div>'+
+          '<div style="font-size:13px;color:var(--txt-lt);line-height:1.8"><div><span class="tag tag-pd">'+eh(inferPCat(fp)||'—')+'</span></div><div>📐 尺寸：'+eh(fp.size||'—')+'</div><div>📅 完成：'+(fp.completionDate||'—')+'</div><div>⏱ 时长：'+eh(fp.duration||'—')+'</div>'+
           fbHTML+acHTML+
           (fp.notes?'<div style="margin-top:8px;padding:8px 12px;background:var(--side-bg);border-radius:10px;font-size:12px">💬 '+eh(fp.notes)+'</div>':'')+pjLabel+'</div>'+
           '<div style="margin-top:10px;display:flex;gap:6px"><button class="btn btn-sm" onclick="edFP(\''+fp.id+'\')">✏️ 编辑</button><button class="btn btn-sm btn-dg" onclick="dlFP(\''+fp.id+'\')">🗑️ 删除</button></div></div>'
@@ -1104,6 +1135,8 @@ function opFPNew(eid){
     '<button class="btn btn-sm" onclick="addFpAcRow()" style="margin-top:8px">➕ 添加辅料</button></div>';
 
   var fields=[
+    {name:'projectCategory',lb:'作品类型',type:'select',op:['包包类','饰品类','服饰类']},
+    {name:'projectType',lb:'作品名称',ph:'如：化妆包、零钱包、笔袋、大肠发圈、帆布包...'},
     {name:'images',lb:'成品图片',type:'image'},
     {name:'size',lb:'成品实际尺寸',ph:'如：20cm × 15cm × 5cm'},
     {name:'completionDate',lb:'制作完成时间',type:'date',def:(ex&&ex.completionDate?ex.completionDate:new Date().toISOString().slice(0,10))},
@@ -1152,10 +1185,13 @@ function addFpAcRow(){
 function svFPNew(eid){
   try{
     var fields=[
+      {name:'projectCategory',lb:'作品类型',type:'select'},{name:'projectType',lb:'作品名称'},
       {name:'images',lb:'图片',type:'image'},{name:'size',lb:'尺寸'},
       {name:'completionDate',lb:'完成时间'},{name:'duration',lb:'时长'},{name:'notes',lb:'备注',type:'textarea'}
     ];
     var vs=gV(fields);
+    if(!vs.projectCategory){ts('请选择作品类型');return}
+    if(!vs.projectType){ts('请输入作品名称');return}
 
     // 收集面料
     var fbs=[];
@@ -1190,14 +1226,14 @@ function svFPNew(eid){
       ex.accessoryDetails=acs;
     }else{
       D.finishedProducts.push({
-        id:gid(),projectId:'',projectType:'手工录入',
+        id:gid(),projectId:'',projectCategory:vs.projectCategory||'',projectType:vs.projectType||'手工录入',
         images:vs.images||[],size:vs.size||'',
         completionDate:vs.completionDate||'',duration:vs.duration||'',
         fabricDetails:fbs,accessoryDetails:acs,notes:vs.notes||'',
         createdAt:new Date().toISOString().slice(0,10)
       });
     }
-    addAct('🏆',(eid?'更新':'录入')+'成品');
+    addAct('🏆',(eid?'更新':'录入')+'成品：'+(vs.projectCategory?vs.projectCategory+' · ':'')+vs.projectType);
     sv(D);clMo();rp();ts(eid?'成品已更新':'成品已录入');
   }catch(err){
     console.error('svFPNew error',err);
