@@ -354,11 +354,15 @@ function sv(d){
   _syncTimer = setTimeout(function(){ syncCloud(); }, 600);
 }
 
+var _lastErrToast = '';
 function setSyncStatus(st){
   var txt = '';
   if(st === 'syncing') txt = '☁️ 同步中...';
   else if(st === 'ok') txt = '✅ 已同步';
-  else if(st === 'error') txt = '⚠️ 同步失败：' + (_syncErr || '未知错误');
+  else if(st === 'error'){
+    txt = '⚠️ 同步失败：' + (_syncErr || '未知错误');
+    if(_syncErr && _syncErr !== _lastErrToast){ _lastErrToast = _syncErr; ts('同步失败：' + _syncErr, 5000); }
+  }
   else if(st === 'offline') txt = '📴 离线模式';
   else txt = '☁️ 准备同步';
   var els = document.querySelectorAll('.sync-st');
@@ -480,7 +484,7 @@ function nv(p,s){cp=p;csp=s||null;rn();rp();if(window.innerWidth<=768)clSide()}
 // ============================================================
 // Toast
 // ============================================================
-function ts(m){var e=document.querySelector('.toast');if(e)e.remove();var t=document.createElement('div');t.className='toast';t.textContent=m;document.body.appendChild(t);setTimeout(function(){t.remove()},2600)}
+function ts(m,dur){var e=document.querySelector('.toast');if(e)e.remove();var t=document.createElement('div');t.className='toast';t.textContent=m;document.body.appendChild(t);setTimeout(function(){t.remove()},dur||2600)}
 
 // ============================================================
 // 图片灯箱
