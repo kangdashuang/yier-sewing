@@ -315,6 +315,24 @@ try{
 
 var _syncTimer = null, _syncBusy = false, _syncErr = '';
 
+// 旧数据兼容：推断项目/成品分类
+function inferCat(p){
+  if(p.category&&/^(包包类|饰品类|服饰类)$/.test(p.category))return p.category;
+  var t=String(p.type||'');
+  if(/包|袋|钱包|背包/i.test(t))return '包包类';
+  if(/饰|发圈|发饰|扣|链|环|夹/i.test(t))return '饰品类';
+  if(/衣|裙|裤|服|衫|帽|袜/i.test(t))return '服饰类';
+  return '';
+}
+function inferPCat(fp){
+  if(fp.projectCategory&&/^(包包类|饰品类|服饰类)$/.test(fp.projectCategory))return fp.projectCategory;
+  var t=String(fp.projectType||'');
+  if(/包|袋|钱包|背包/i.test(t))return '包包类';
+  if(/饰|发圈|发饰|扣|链|环|夹/i.test(t))return '饰品类';
+  if(/衣|裙|裤|服|衫|帽|袜/i.test(t))return '服饰类';
+  return '';
+}
+
 function defData(){ return {projects:[], finishedProducts:[], fabrics:[], accessories:[], tools:[], activities:[]}; }
 function ldLocal(){ try{ var r=localStorage.getItem(SK); if(!r) return null; var d=JSON.parse(r); if(!isValidData(d)) return null; migrateData(d); return d; }catch(e){ return null; } }
 function ld(){ var d=ldLocal() || defData(); migrateData(d); return d; }
@@ -648,24 +666,6 @@ function flt(it,tm,df){
   if(tm){var t=tm.toLowerCase();r=r.filter(function(i){return Object.values(i).some(function(v){return v!==null&&typeof v!=='object'&&String(v).toLowerCase().indexOf(t)!==-1})})}
   if(df){r=r.filter(function(i){if(!i.createdAt)return true;return i.createdAt.indexOf(df)===0})}
   return r;
-}
-
-// 旧数据兼容：推断项目/成品分类
-function inferCat(p){
-  if(p.category&&/^(包包类|饰品类|服饰类)$/.test(p.category))return p.category;
-  var t=String(p.type||'');
-  if(/包|袋|钱包|背包/i.test(t))return '包包类';
-  if(/饰|发圈|发饰|扣|链|环|夹/i.test(t))return '饰品类';
-  if(/衣|裙|裤|服|衫|帽|袜/i.test(t))return '服饰类';
-  return '';
-}
-function inferPCat(fp){
-  if(fp.projectCategory&&/^(包包类|饰品类|服饰类)$/.test(fp.projectCategory))return fp.projectCategory;
-  var t=String(fp.projectType||'');
-  if(/包|袋|钱包|背包/i.test(t))return '包包类';
-  if(/饰|发圈|发饰|扣|链|环|夹/i.test(t))return '饰品类';
-  if(/衣|裙|裤|服|衫|帽|袜/i.test(t))return '服饰类';
-  return '';
 }
 
 // ============================================================
