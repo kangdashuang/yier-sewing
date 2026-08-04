@@ -1,0 +1,26 @@
+{
+  "name": "一二的缝纫",
+  "short_name": "一二的缝纫",
+  "description": "一二的缝纫工作台 - 记录每一次缝纫的美好",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f7f3ee",
+  "theme_color": "#c4a882",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' rx='40' fill='%23f5f0ea'/><text x='96' y='110' font-size='80' text-anchor='middle'>🧵</text><text x='96' y='155' font-size='20' text-anchor='middle' fill='%238b7355' font-family='sans-serif'>一二的缝纫</text></svg>",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='104' fill='%23f5f0ea'/><text x='256' y='290' font-size='200' text-anchor='middle'>🧵</text><text x='256' y='410' font-size='56' text-anchor='middle' fill='%238b7355' font-family='sans-serif'>一二的缝纫</text></svg>",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["productivity", "lifestyle"],
+  "lang": "zh-CN"
+}
