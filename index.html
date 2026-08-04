@@ -319,10 +319,12 @@ async function loadCloud(){
     if(error){
       if(error.code === 'PGRST116') return null; // no rows
       console.error('loadCloud error', error);
+      _syncErr = (error.message || '') + ' [code:' + (error.code || 'unknown') + ']';
+      setSyncStatus('error');
       return null;
     }
     return data && data.data ? data.data : null;
-  }catch(e){ console.error('loadCloud', e); return null; }
+  }catch(e){ console.error('loadCloud', e); _syncErr = e.message || '加载失败'; setSyncStatus('error'); return null; }
 }
 
 async function syncCloud(force){
@@ -333,7 +335,7 @@ async function syncCloud(force){
     var {error} = await _sb.from('app_data').upsert({id:'main', data:D, updated_at:new Date().toISOString()}, {onConflict:'id'});
     if(error){
       console.error('syncCloud error', error);
-      _syncErr = error.message || '同步失败';
+      _syncErr = (error.message||'同步失败') + ' [code:'+(error.code||'unknown')+']';
       setSyncStatus('error');
     }else{
       _syncErr = ''; setSyncStatus('ok');
@@ -356,11 +358,11 @@ function setSyncStatus(st){
   var txt = '';
   if(st === 'syncing') txt = '☁️ 同步中...';
   else if(st === 'ok') txt = '✅ 已同步';
-  else if(st === 'error') txt = '⚠️ 同步失败';
+  else if(st === 'error') txt = '⚠️ 同步失败：' + (_syncErr || '未知错误');
   else if(st === 'offline') txt = '📴 离线模式';
   else txt = '☁️ 准备同步';
   var els = document.querySelectorAll('.sync-st');
-  els.forEach(function(el){ el.textContent = txt; });
+  els.forEach(function(el){ el.textContent = txt; el.title = txt; });
 }
 
 function subCloud(){
@@ -386,6 +388,7 @@ function subCloud(){
 }
 
 var D = ld();
+var _initSyncDone = false;
 (function(){
   if(!_sb){ setSyncStatus('offline'); return; }
   setSyncStatus('syncing');
@@ -400,8 +403,9 @@ var D = ld();
         rp();
       }
     }
-    setSyncStatus('ok');
+    if(!_syncErr) setSyncStatus('ok');
     subCloud();
+    _initSyncDone = true;
   });
 })();
 function gid(){return 'id_'+Date.now()+'_'+Math.random().toString(36).substr(2,8)}
