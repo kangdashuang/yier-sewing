@@ -379,9 +379,10 @@ function subCloud(){
       .on('postgres_changes', {event:'*', schema:'public', table:'app_data', filter:'id=eq.main'}, function(payload){
         if(payload.new && payload.new.data){
           var cloud = payload.new.data;
-          var local = ldLocal();
+          if(!isValidData(cloud)) return;
+          var local = ldLocal() || defData();
           var cloudStr = JSON.stringify(cloud);
-          var localStr = local ? JSON.stringify(local) : '';
+          var localStr = JSON.stringify(local);
           if(cloudStr !== localStr){
             localStorage.setItem(SK, cloudStr);
             D = cloud;
@@ -396,19 +397,34 @@ function subCloud(){
 
 var D = ld();
 var _initSyncDone = false;
+function isValidData(d){
+  return d && typeof d === 'object' && Array.isArray(d.projects) && Array.isArray(d.fabrics) && Array.isArray(d.accessories) && Array.isArray(d.tools) && Array.isArray(d.finishedProducts) && Array.isArray(d.activities);
+}
 (function(){
   if(!_sb){ setSyncStatus('offline'); return; }
   setSyncStatus('syncing');
   loadCloud().then(function(cloud){
-    if(cloud){
-      var local = ldLocal();
+    var local = ldLocal() || defData();
+    if(isValidData(cloud)){
+      // 云端有有效数据：与本地比较，不同则以云端为准
       var cloudStr = JSON.stringify(cloud);
-      var localStr = local ? JSON.stringify(local) : '';
+      var localStr = JSON.stringify(local);
       if(cloudStr !== localStr){
         localStorage.setItem(SK, cloudStr);
         D = cloud;
         rp();
       }
+    }else if(cloud && Object.keys(cloud).length === 0){
+      // 云端是空对象 {}：用本地数据初始化云端
+      D = local;
+      localStorage.setItem(SK, JSON.stringify(D));
+      rp();
+      syncCloud(true);
+    }else{
+      // 云端无数据：保持本地
+      D = local;
+      localStorage.setItem(SK, JSON.stringify(D));
+      rp();
     }
     if(!_syncErr) setSyncStatus('ok');
     subCloud();
