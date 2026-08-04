@@ -294,7 +294,7 @@ try{
 var _syncTimer = null, _syncBusy = false, _syncErr = '';
 
 function defData(){ return {projects:[], finishedProducts:[], fabrics:[], accessories:[], tools:[], activities:[]}; }
-function ldLocal(){ try{ var r=localStorage.getItem(SK); return r ? JSON.parse(r) : null; }catch(e){ return null; } }
+function ldLocal(){ try{ var r=localStorage.getItem(SK); if(!r) return null; var d=JSON.parse(r); return isValidData(d)?d:null; }catch(e){ return null; } }
 function ld(){ return ldLocal() || defData(); }
 
 function svLocal(d){
