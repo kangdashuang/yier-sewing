@@ -598,12 +598,15 @@ document.addEventListener('click',function(e){if(e.target===document.getElementB
 // ============================================================
 // 图片处理（压缩后保存，避免 localStorage 超限）
 // ============================================================
+function isValidDataUrl(s){
+  return typeof s==='string' && s.indexOf('data:image/')===0 && s.indexOf('base64,')!==-1 && s.length>1000;
+}
 function compressImg(src,maxSide,quality,cb){
   var img=new Image();
   img.onload=function(){
     try{
       var w=img.width,h=img.height;
-      if(!w||!h){cb(src);return}
+      if(!w||!h){cb(null);return}
       if(w>maxSide||h>maxSide){
         if(w>h){h=Math.round(h*maxSide/w);w=maxSide}
         else{w=Math.round(w*maxSide/h);h=maxSide}
@@ -616,10 +619,10 @@ function compressImg(src,maxSide,quality,cb){
       ctx.fillRect(0,0,w,h);
       ctx.drawImage(img,0,0,w,h);
       var data=cv.toDataURL('image/jpeg',quality);
-      cb(data);
-    }catch(err){cb(src)}
+      cb(isValidDataUrl(data)?data:null);
+    }catch(err){cb(null)}
   };
-  img.onerror=function(){cb(src)}
+  img.onerror=function(){cb(null)}
   img.src=src;
 }
 function isImg(file){
@@ -630,6 +633,7 @@ function isImg(file){
 function hiU(input,pid){
   var fs=input.files;var c=document.getElementById(pid);if(!c)return;
   if(!fs||!fs.length){ts('请选择图片文件');return}
+  var ok=0,fail=0;
   for(var i=0;i<fs.length;i++){
     (function(file){
       if(!isImg(file)){ts('请选择图片文件（支持 jpg/png/gif/webp 等）');return}
@@ -637,20 +641,26 @@ function hiU(input,pid){
       var r=new FileReader();
       r.onload=function(e){
         compressImg(e.target.result,1024,0.75,function(data){
-          if(!data){ts('图片处理失败，请重试');return}
+          if(!isValidDataUrl(data)){
+            fail++;
+            ts('图片处理失败，请转换为 jpg/png 格式后重试');
+            return;
+          }
+          ok++;
           var d=document.createElement('div');d.className='iw';
-          d.innerHTML='<img src="'+data+'" onclick="shLb(this.src)" alt=""><button class="im-x" onclick="this.parentElement.remove()">✕</button>';
+          d.innerHTML='<img src="'+data+'" onclick="shLb(this.src)" onerror="this.style.display=\'none\'" alt=""><button class="im-x" onclick="this.parentElement.remove()">✕</button>';
           d.setAttribute('data-img',data);c.appendChild(d);
+          if(ok+fail===fs.length && ok>0){ts('已添加 '+ok+' 张图片')}
         });
       };
-      r.onerror=function(){ts('图片读取失败，请重试')}
+      r.onerror=function(){fail++;ts('图片读取失败，请重试')}
       r.readAsDataURL(file);
     })(fs[i]);
   }
   // 清空 input，允许重复选择同一张图片
-  input.value='';
+  try{input.value=''}catch(_){}
 }
-function gImgs(pid){var c=document.getElementById(pid);if(!c)return[];var is=c.querySelectorAll('.iw');var r=[];is.forEach(function(w){var d=w.getAttribute('data-img');if(d)r.push(d)});return r}
+function gImgs(pid){var c=document.getElementById(pid);if(!c)return[];var is=c.querySelectorAll('.iw');var r=[];is.forEach(function(w){var d=w.getAttribute('data-img');if(isValidDataUrl(d))r.push(d)});return r}
 
 // ============================================================
 // 表单辅助
@@ -661,7 +671,7 @@ function bF(fs,vs){
     var v=vs[f.name]!==undefined?vs[f.name]:(f.def||'');
     if(f.type==='textarea'){return '<div class="fg"><label class="fl">'+f.lb+(f.rq?' *':'')+'</label><textarea class="ft" id="f__'+f.name+'" placeholder="'+(f.ph||'')+'">'+eh(v)+'</textarea></div>'}
     if(f.type==='select'){return '<div class="fg"><label class="fl">'+f.lb+(f.rq?' *':'')+'</label><select class="fs" id="f__'+f.name+'">'+f.op.map(function(o){return '<option value="'+eh(o)+'" '+(v===o?'selected':'')+'>'+eh(o)+'</option>'}).join('')+'</select></div>'}
-    if(f.type==='image'){return '<div class="fg"><label class="fl">'+f.lb+'</label><div class="im-up" onclick="document.getElementById(\'fi__'+f.name+'\').click()"><div>📷 点击上传图片</div><input type="file" id="fi__'+f.name+'" class="fui" accept="image/*" multiple onchange="hiU(this,\'ip__'+f.name+'\')"></div><div class="im-pv" id="ip__'+f.name+'">'+(Array.isArray(v)?v.map(function(img){return '<div class="iw" data-img="'+img+'"><img src="'+img+'" onclick="shLb(this.src)"><button class="im-x" onclick="this.parentElement.remove()">✕</button></div>'}).join(''):'')+'</div></div>'}
+    if(f.type==='image'){return '<div class="fg"><label class="fl">'+f.lb+'</label><div class="im-up" onclick="document.getElementById(\'fi__'+f.name+'\').click()"><div>📷 点击上传图片</div><input type="file" id="fi__'+f.name+'" class="fui" accept="image/*" multiple onchange="hiU(this,\'ip__'+f.name+'\')"></div><div class="im-pv" id="ip__'+f.name+'">'+(Array.isArray(v)?v.filter(function(img){return isValidDataUrl(img)}).map(function(img){return '<div class="iw" data-img="'+img+'"><img src="'+img+'" onclick="shLb(this.src)" onerror="this.style.display=\'none\'"><button class="im-x" onclick="this.parentElement.remove()">✕</button></div>'}).join(''):'')+'</div></div>'}
     return '<div class="fg"><label class="fl">'+f.lb+(f.rq?' *':'')+'</label><input class="fi" id="f__'+f.name+'" type="'+f.type+'" value="'+eh(v)+'" placeholder="'+(f.ph||'')+'"></div>'
   }).join('');
 }
@@ -782,7 +792,7 @@ function rd(m){
   D.finishedProducts.forEach(function(fp){
     if(fp.images&&fp.images.length){
       fp.images.forEach(function(img){
-        allImgs.push({src:img,cat:inferPCat(fp),name:fp.projectType||'作品',id:fp.id});
+        if(isValidDataUrl(img))allImgs.push({src:img,cat:inferPCat(fp),name:fp.projectType||'作品',id:fp.id});
       });
     }
   });
@@ -799,7 +809,7 @@ function rd(m){
     carImgs.map(function(im,i){
       var imHTML=im.placeholder?
         '<div style="width:100%;height:280px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--side-bg),var(--bd-lt));color:var(--txt-ll);font-size:14px">完成第一个作品后，这里会轮播你的作品图 ✨</div>':
-        '<img src="'+im.src+'" style="width:100%;height:280px;object-fit:cover;cursor:pointer" onclick="shLb(this.src)">';
+        '<img src="'+im.src+'" style="width:100%;height:280px;object-fit:cover;cursor:pointer" onclick="shLb(this.src)" onerror="this.style.display=\'none\'">';
       return '<div class="car-slide" data-idx="'+i+'" style="'+(i===0?'':'display:none')+'">'+
         imHTML+
         '<div style="padding:14px 18px;background:var(--card)">'+
@@ -1220,8 +1230,9 @@ function rpds(m){
             fp.accessoryDetails.map(function(ad){return '<span style="display:inline-block;background:var(--side-bg);padding:2px 8px;border-radius:8px;margin:2px 4px 2px 0;font-size:12px">'+eh(ad.accessoryName||'')+' ×'+eh(ad.quantity||'')+eh(ad.unit||'')+'</span>'}).join('')+'</div>';
         }
         var pjLabel=fp.projectId?'<span style="font-size:9px;color:var(--txt-ll);margin-top:6px">📋 项目归档</span>':'<span style="font-size:9px;color:var(--txt-ll);margin-top:6px">✋ 手工录入</span>';
-        return '<div class="cd">'+
-          (fp.images&&fp.images.length?'<div style="display:flex;gap:6px;margin-bottom:10px;overflow-x:auto;flex-wrap:wrap">'+fp.images.map(function(img){return '<img src="'+img+'" style="width:100px;height:100px;object-fit:cover;border-radius:12px;cursor:pointer" onclick="shLb(this.src)">'}).join('')+'</div>':'<div style="text-align:center;padding:20px;color:var(--txt-ll)">📷 暂无图片</div>')+
+        var validImgs=(fp.images||[]).filter(function(img){return isValidDataUrl(img)});
+        var imgHTML=validImgs.length?'<div style="display:flex;gap:6px;margin-bottom:10px;overflow-x:auto;flex-wrap:wrap">'+validImgs.map(function(img){return '<img src="'+img+'" style="width:100px;height:100px;object-fit:cover;border-radius:12px;cursor:pointer" onclick="shLb(this.src)" onerror="this.style.display=\'none\'">'}).join('')+'</div>':'<div style="text-align:center;padding:20px;color:var(--txt-ll)">📷 暂无图片</div>';
+        return '<div class="cd">'+imgHTML+
           '<div class="cd-tt"><span class="em">'+catEm(inferPCat(fp))+'</span>'+eh(fp.projectType||'未知作品')+'</div>'+
           '<div style="font-size:13px;color:var(--txt-lt);line-height:1.8"><div><span class="tag tag-pd">'+eh(inferPCat(fp)||'—')+'</span></div><div>📐 尺寸：'+eh(fp.size||'—')+'</div><div>📅 完成：'+(fp.completionDate||'—')+'</div><div>⏱ 时长：'+eh(fp.duration||'—')+'</div>'+
           fbHTML+acHTML+
