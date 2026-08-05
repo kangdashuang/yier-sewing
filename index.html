@@ -210,8 +210,8 @@ tr:hover td{background:rgba(164,139,114,.04)}
 .dm-cd{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px;padding-top:16px;border-top:1px solid var(--bd-lt)}
 
 /* ===== 手机底部导航 ===== */
-.mob-bnav{display:none;position:fixed;bottom:0;left:0;right:0;height:calc(60px + env(safe-area-inset-bottom,0));padding-bottom:env(safe-area-inset-bottom,0);background:rgba(242,235,225,.96);border-top:1px solid var(--bd);z-index:198;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);box-shadow:0 -2px 16px rgba(122,96,72,.06)}
-.mob-bnav .bn-in{display:flex;height:60px;align-items:center;justify-content:space-around;padding:0 4px}
+.mob-bnav{display:none;position:fixed;bottom:0;left:0;right:0;height:calc(72px + env(safe-area-inset-bottom,0));padding-bottom:env(safe-area-inset-bottom,0);background:rgba(242,235,225,.96);border-top:1px solid var(--bd);z-index:198;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);box-shadow:0 -2px 16px rgba(122,96,72,.06)}
+.mob-bnav .bn-in{display:flex;height:72px;align-items:center;justify-content:space-around;padding:0 4px}
 .bn-i{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:4px 8px;border-radius:12px;cursor:pointer;transition:all var(--t);min-width:50px;border:none;background:none;color:var(--txt-lt)}
 .bn-i.ac{color:var(--pri-dk)}
 .bn-ic{font-size:20px;line-height:1}
@@ -224,7 +224,7 @@ tr:hover td{background:rgba(164,139,114,.04)}
   .side-ov.sh{display:block}
   .mob-hd{display:flex}
   .mob-bnav{display:block}
-  .main{margin-left:0;padding:14px 12px;padding-top:calc(66px + env(safe-area-inset-top,0));padding-bottom:calc(72px + env(safe-area-inset-bottom,0))}
+  .main{margin-left:0;padding:14px 12px;padding-top:calc(78px + env(safe-area-inset-top,0));padding-bottom:calc(96px + env(safe-area-inset-bottom,0))}
   .st-cds{grid-template-columns:repeat(2,1fr);gap:12px}
   .st-cd{padding:16px 10px;border-radius:var(--r-lg)}
   .st-ic{font-size:26px;margin-bottom:4px}
@@ -333,7 +333,7 @@ function inferPCat(fp){
   return '';
 }
 
-function defData(){ return {projects:[], finishedProducts:[], fabrics:[], accessories:[], tools:[], activities:[]}; }
+function defData(){ return {projects:[], finishedProducts:[], fabrics:[], accessories:[], tools:[], patterns:[], activities:[]}; }
 function ldLocal(){ try{ var r=localStorage.getItem(SK); if(!r) return null; var d=JSON.parse(r); if(!isValidData(d)) return null; migrateData(d); return d; }catch(e){ return null; } }
 function ld(){ var d=ldLocal() || defData(); migrateData(d); return d; }
 function migrateData(d){
@@ -443,7 +443,7 @@ function subCloud(){
 var D = ld();
 var _initSyncDone = false;
 function isValidData(d){
-  return d && typeof d === 'object' && Array.isArray(d.projects) && Array.isArray(d.fabrics) && Array.isArray(d.accessories) && Array.isArray(d.tools) && Array.isArray(d.finishedProducts) && Array.isArray(d.activities);
+  return d && typeof d === 'object' && Array.isArray(d.projects) && Array.isArray(d.fabrics) && Array.isArray(d.accessories) && Array.isArray(d.tools) && Array.isArray(d.finishedProducts) && Array.isArray(d.activities) && Array.isArray(d.patterns);
 }
 (function(){
   if(!_sb){ setSyncStatus('offline'); return; }
@@ -477,6 +477,22 @@ function isValidData(d){
   });
 })();
 function gid(){return 'id_'+Date.now()+'_'+Math.random().toString(36).substr(2,8)}
+
+// 轮播切换
+function carStop(){if(window._carTimer){clearInterval(window._carTimer);window._carTimer=null}}
+function carMove(d){
+  var slides=document.querySelectorAll('#dashCarousel .car-slide');
+  if(slides.length===0)return;
+  var cur=window._carCur||0;
+  var nxt=(cur+d+slides.length)%slides.length;
+  slides[cur].style.display='none';
+  slides[nxt].style.display='';
+  window._carCur=nxt;
+  var idxEl=document.getElementById('carIdx');
+  if(idxEl)idxEl.textContent=(nxt+1);
+  // 重置定时器（手动操作后从当前重新计时）
+  if(window._carTimer){clearInterval(window._carTimer);window._carTimer=setInterval(function(){carMove(1)},5000)}
+}
 
 // 活动记录
 function addAct(ic,tx){D.activities.unshift({id:Date.now(),icon:ic,text:tx,time:new Date().toLocaleString('zh-CN')});if(D.activities.length>60)D.activities=D.activities.slice(0,60);sv(D)}
@@ -521,6 +537,7 @@ var navs=[
     {id:'acc-thread',ic:'🧶',lb:'线类'},{id:'acc-closure',ic:'🔘',lb:'扣合类'},{id:'acc-lace',ic:'🎀',lb:'花边织带类'}
   ]},
   {id:'tool',ic:'🔧',lb:'工具与设备',ch:null},
+  {id:'pattern',ic:'📐',lb:'图纸库',ch:null},
   {id:'cost',ic:'💰',lb:'成本花费',ch:null}
 ];
 var cp='dash',csp=null;
@@ -659,14 +676,21 @@ function cD(msg,cb){
 }
 
 // ============================================================
+// 分类图标
+// ============================================================
+function catEm(cat){return cat==='包包类'?'👜':cat==='饰品类'?'🎀':cat==='服饰类'?'👗':'🎨'}
+function catIcon(cat){return cat==='包包类'?'👜':cat==='饰品类'?'🎀':cat==='服饰类'?'👗':'🎨'}
+
+// ============================================================
 // 搜索筛选
 // ============================================================
 function flt(it,tm,df){
   var r=[].concat(it);
-  if(tm){var t=tm.toLowerCase();r=r.filter(function(i){return Object.values(i).some(function(v){return v!==null&&typeof v!=='object'&&String(v).toLowerCase().indexOf(t)!==-1})})}
+  if(tm){var kw=tm.toLowerCase().trim().split(/\s+/).filter(function(k){return k});r=r.filter(function(i){return kw.every(function(k){return Object.keys(i).some(function(key){if(key==='id'||key==='createdAt'||key==='image'||key==='images'||key==='fabricImage'||key==='accessoryImage')return false;var v=i[key];if(v===null||v===undefined)return false;if(typeof v==='object'){return JSON.stringify(v).toLowerCase().indexOf(k)!==-1}return String(v).toLowerCase().indexOf(k)!==-1})})})}
   if(df){r=r.filter(function(i){if(!i.createdAt)return true;return i.createdAt.indexOf(df)===0})}
   return r;
 }
+function rfoc(id){setTimeout(function(){var e=document.getElementById(id);if(e){e.focus();try{var v=e.value.length;e.setSelectionRange(v,v)}catch(_){}}},0)}
 
 // ============================================================
 // 全局过滤状态
@@ -682,6 +706,7 @@ function rem(ic,tx){return '<div class="cd"><div class="emp"><div class="emp-ic"
 // 页面路由
 // ============================================================
 function rp(){
+  carStop();
   D=ld();var m=document.getElementById('main');
   switch(cp){
     case'dash':rd(m);break;
@@ -689,6 +714,7 @@ function rp(){
     case'fab':rf(m);break;
     case'acc':ra(m);break;
     case'tool':rt(m);break;
+    case'pattern':rpt(m);break;
     case'cost':rc(m);break;
     default:rd(m)
   }
@@ -697,24 +723,86 @@ function rp(){
 // ============================================================
 // 1. 总览
 // ============================================================
+var _maoQuotes=[
+  '今日宜动手不动气，布料比道理温柔 🪡',
+  '星星之火，可以燎原 ✨',
+  '我们的目的一定要达到，我们的目的一定能够达到 🎯',
+  '一万年太久，只争朝夕 ⏳',
+  '雄关漫道真如铁，而今迈步从头越 🏔',
+  '世上无难事，只要肯登攀 🧗',
+  '不畏浮云遮望眼，自缘身在最高层 ☁️',
+  '情况是在不断变化，要使自己的思想适应新的情况，就得学习 📚',
+  '一切反动派都是纸老虎 🐯',
+  '革命不是请客吃饭，不是做文章，不是绘画绣花 🍚',
+  '为人民服务 🫶',
+  '实事求是，是马克思主义的根本观点 🌿',
+  '改造客观世界，也改造自己的主观世界 🪞',
+  '团结就是力量 💪',
+  '在战略上要藐视敌人，在战术上要重视敌人 🎯',
+  '凡事预则立，不预则废 📝',
+  '勤俭办一切事业 🧵',
+  '自力更生，艰苦奋斗 🌱',
+  '坐而论道，不如起而行之 👣',
+  '学习的敌人是自己的满足，要认真学习一点东西，必须从不自满开始 🔍'
+];
 function rd(m){
   // 按状态统计
   var ps=D.projects.filter(function(p){return p.status==='待开始'});
   var pi=D.projects.filter(function(p){return p.status==='进行中'});
-  var pd=D.projects.filter(function(p){return p.status==='已完成'});
-  var pc=ps.length, ic=pi.length, dc=pd.length;
+  var dc=D.finishedProducts.length;
+  var pc=ps.length, ic=pi.length;
   var fc=D.fabrics.reduce(function(s,f){return s+(parseFloat(f.purchasePrice)||0)},0);
   var ac=D.accessories.reduce(function(s,a){return s+(parseFloat(a.purchasePrice)||0)},0);
   var tc=D.tools.reduce(function(s,t){return s+(parseFloat(t.price)||0)*(t.quantity||1)},0);
   var total=fc+ac+tc;
 
   // 按作品类型细分
-  function stByType(arr){return{bag:arr.filter(function(p){return inferCat(p)==='包包类'}).length,jewelry:arr.filter(function(p){return inferCat(p)==='饰品类'}).length,cloth:arr.filter(function(p){return inferCat(p)==='服饰类'}).length}}
+  function stByType(arr,getter){getter=getter||inferCat;return{bag:arr.filter(function(p){return getter(p)==='包包类'}).length,jewelry:arr.filter(function(p){return getter(p)==='饰品类'}).length,cloth:arr.filter(function(p){return getter(p)==='服饰类'}).length}}
 
-  var sP=stByType(ps), iP=stByType(pi), dP=stByType(pd);
-  function stTypeH(b,j,c){return '<div style="display:flex;gap:8px;margin-top:6px;font-size:11px;color:var(--txt-lt);justify-content:center;flex-wrap:wrap"><span>👜'+b+'</span><span>💍'+j+'</span><span>👗'+c+'</span></div>'}
+  var sP=stByType(ps), iP=stByType(pi), dP=stByType(D.finishedProducts,inferPCat);
+  function stTypeH(b,j,c){return '<div style="display:flex;gap:8px;margin-top:6px;font-size:11px;color:var(--txt-lt);justify-content:center;flex-wrap:wrap"><span>👜 '+b+'</span><span>🎀 '+j+'</span><span>👗 '+c+'</span></div>'}
+
+  // 成品图片轮播：随机抽取最多5张
+  var allImgs=[];
+  D.finishedProducts.forEach(function(fp){
+    if(fp.images&&fp.images.length){
+      fp.images.forEach(function(img){
+        allImgs.push({src:img,cat:inferPCat(fp),name:fp.projectType||'作品',id:fp.id});
+      });
+    }
+  });
+  // 洗牌取前5
+  for(var i=allImgs.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=allImgs[i];allImgs[i]=allImgs[j];allImgs[j]=t}
+  var carImgs=allImgs.slice(0,5);
+  var carHTML='';
+  if(carImgs.length===0){
+    carImgs=[{src:'',cat:'',name:'还没有作品',placeholder:true}];
+  }
+  carHTML='<div class="cd dash-car" id="dashCarousel" style="margin-bottom:16px">'+
+    '<div class="cd-tt"><span class="em">🎠</span>作品回顾 · 毛泽东选集</div>'+
+    '<div style="position:relative;border-radius:var(--r-lg);overflow:hidden;background:var(--side-bg);min-height:280px">'+
+    carImgs.map(function(im,i){
+      var imHTML=im.placeholder?
+        '<div style="width:100%;height:280px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--side-bg),var(--bd-lt));color:var(--txt-ll);font-size:14px">完成第一个作品后，这里会轮播你的作品图 ✨</div>':
+        '<img src="'+im.src+'" style="width:100%;height:280px;object-fit:cover;cursor:pointer" onclick="shLb(this.src)">';
+      return '<div class="car-slide" data-idx="'+i+'" style="'+(i===0?'':'display:none')+'">'+
+        imHTML+
+        '<div style="padding:14px 18px;background:var(--card)">'+
+        '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">'+
+          '<span class="tag tag-pd">'+(im.cat||'未分类')+'</span>'+
+          '<span style="font-weight:700;font-size:15px;color:var(--txt)">'+eh(im.name)+'</span>'+
+        '</div>'+
+        '<div style="font-size:13px;color:var(--txt-lt);font-style:italic;line-height:1.7">📜 '+eh(_maoQuotes[(Math.floor(Math.random()*_maoQuotes.length))])+'</div>'+
+        '</div></div>';
+    }).join('')+
+    (carImgs.length>1?
+    '<button class="btn btn-ic car-prev" onclick="carMove(-1)" style="position:absolute;top:120px;left:12px;background:rgba(255,255,255,.85)">‹</button>'+
+    '<button class="btn btn-ic car-next" onclick="carMove(1)" style="position:absolute;top:120px;right:12px;background:rgba(255,255,255,.85)">›</button>'+
+    '<div style="position:absolute;top:14px;right:18px;background:rgba(77,66,56,.5);color:#fff;font-size:11px;padding:3px 10px;border-radius:20px">🎠 <span id="carIdx">1</span> / '+carImgs.length+'</div>':'')+
+    '</div></div>';
 
   m.innerHTML='<div class="page ac"><div class="pg-hd"><h1 class="pg-tt">📊 总览工作台</h1><p class="pg-sub">所有数据自动统计，实时更新，一目了然</p></div>'+
+    carHTML+
     '<div class="st-cds">'+
     '<div class="st-cd" onclick="nv(\'proj\',\'proj-list\')"><div class="st-ic">📌</div><div class="st-vl">'+pc+'</div><div class="st-lb">待办任务数</div>'+stTypeH(sP.bag,sP.jewelry,sP.cloth)+'</div>'+
     '<div class="st-cd" onclick="nv(\'proj\',\'proj-list\')"><div class="st-ic">🌀</div><div class="st-vl">'+ic+'</div><div class="st-lb">进行任务数</div>'+stTypeH(iP.bag,iP.jewelry,iP.cloth)+'</div>'+
@@ -725,9 +813,19 @@ function rd(m){
     '<div class="ql-i" onclick="nv(\'fab\',\'fab-outer\')"><span class="ql-ic">🧵</span>布料仓库</div>'+
     '<div class="ql-i" onclick="nv(\'acc\',\'acc-thread\')"><span class="ql-ic">🧷</span>辅料仓库</div>'+
     '<div class="ql-i" onclick="nv(\'tool\')"><span class="ql-ic">🔧</span>工具设备</div>'+
+    '<div class="ql-i" onclick="nv(\'pattern\')"><span class="ql-ic">📐</span>图纸库</div>'+
     '<div class="ql-i" onclick="nv(\'proj\',\'prod-list\')"><span class="ql-ic">🏆</span>成品欣赏</div>'+
     '<div class="ql-i" onclick="nv(\'cost\')"><span class="ql-ic">💰</span>成本明细</div></div></div>'+
     '<div class="cd dash-act" style="margin-top:16px"><div class="cd-tt"><span class="em">🕐</span>近期动态</div><div class="act-ls">'+(D.activities.length===0?rem('📭','暂无动态').replace('<div class="cd">','').replace('</div>',''):D.activities.slice(0,8).map(function(a){return '<div class="act-i"><span class="act-ic">'+a.icon+'</span><span class="act-tx">'+a.text+'</span><span class="act-tm">'+a.time+'</span></div>'}).join(''))+'</div></div>';
+  // 启动轮播定时器（如果有多张）
+  if(carImgs.length>1){
+    if(window._carTimer)clearInterval(window._carTimer);
+    window._carCur=0;
+    window._carTotal=carImgs.length;
+    window._carTimer=setInterval(function(){carMove(1)},5000);
+  }else{
+    if(window._carTimer){clearInterval(window._carTimer);window._carTimer=null}
+  }
 }
 
 // ============================================================
@@ -738,7 +836,7 @@ function rpl(m){
   function dr(){
     var is=flt(D.projects,gs.proj,gd.proj);
     m.innerHTML='<div class="page ac"><div class="pg-hd"><h1 class="pg-tt">📋 项目列表</h1><p class="pg-sub">规划记录每一次缝纫制作项目</p></div>'+
-      '<div class="tb"><input class="fi" id="sProj" placeholder="🔍 搜索项目..." value="'+eh(gs.proj)+'" oninput="gs.proj=this.value;rpl(document.getElementById(\'main\'))"><input class="fi" type="date" id="dProj" value="'+gd.proj+'" onchange="gd.proj=this.value;rpl(document.getElementById(\'main\'))"><button class="btn btn-pri" onclick="opP()">➕ 新建项目</button></div>'+
+      '<div class="tb"><input class="fi" id="sProj" placeholder="🔍 搜索项目..." value="'+eh(gs.proj)+'" oninput="gs.proj=this.value;rfoc('sProj');rpl(document.getElementById(\'main\'))"><input class="fi" type="date" id="dProj" value="'+gd.proj+'" onchange="gd.proj=this.value;rpl(document.getElementById(\'main\'))"><button class="btn btn-pri" onclick="opP()">➕ 新建项目</button></div>'+
       (is.length===0?rem('📝','还没有项目，点击上方按钮创建第一个吧'):
       '<div class="cd" style="padding:0;overflow:hidden"><div class="tbl-w"><table><thead><tr><th>作品类型</th><th>作品名称</th><th>面料</th><th>辅料</th><th>状态</th><th>日期</th><th>操作</th></tr></thead><tbody>'+
       is.map(function(p){
@@ -1087,11 +1185,11 @@ function svFP(pid){
 
 function rpds(m){
   gs.prod=gs.prod||'';gd.prod=gd.prod||'';gs.prodCat=gs.prodCat||'all';
-  var cats=[{id:'all',lb:'全部',em:'🏠'},{id:'包包类',lb:'包包类',em:'👜'},{id:'饰品类',lb:'饰品类',em:'💍'},{id:'服饰类',lb:'服饰类',em:'👗'}];
+  var cats=[{id:'all',lb:'全部',em:'🏠'},{id:'包包类',lb:'包包类',em:'👜'},{id:'饰品类',lb:'饰品类',em:'🎀'},{id:'服饰类',lb:'服饰类',em:'👗'}];
   function dr(){
     var is=flt(D.finishedProducts,gs.prod,gd.prod).filter(function(fp){return gs.prodCat==='all'||inferPCat(fp)===gs.prodCat});
     m.innerHTML='<div class="page ac"><div class="pg-hd"><h1 class="pg-tt">🏆 成品库</h1><p class="pg-sub">所有已完成的作品归档</p></div>'+
-      '<div class="tb"><input class="fi" id="sProd" placeholder="🔍 搜索成品..." value="'+eh(gs.prod)+'" oninput="gs.prod=this.value;rpds(document.getElementById(\'main\'))"><input class="fi" type="date" id="dProd" value="'+gd.prod+'" onchange="gd.prod=this.value;rpds(document.getElementById(\'main\'))"><button class="btn btn-pri" onclick="opFPNew()">✋ 新建成品</button></div>'+
+      '<div class="tb"><input class="fi" id="sProd" placeholder="🔍 搜索成品..." value="'+eh(gs.prod)+'" oninput="gs.prod=this.value;rfoc('sProd');rpds(document.getElementById(\'main\'))"><input class="fi" type="date" id="dProd" value="'+gd.prod+'" onchange="gd.prod=this.value;rpds(document.getElementById(\'main\'))"><button class="btn btn-pri" onclick="opFPNew()">✋ 新建成品</button></div>'+
       '<div class="cat-tbs">'+cats.map(function(c){return '<button class="cat-tb '+(gs.prodCat===c.id?'ac':'')+'" onclick="gs.prodCat=\''+c.id+'\';rpds(document.getElementById(\'main\'))">'+c.em+' '+c.lb+'</button>'}).join('')+'</div>'+
       (is.length===0?rem('📦','该分类下还没有成品，完成项目后会自动归档，也可手动新建成品'):
       '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px">'+
@@ -1109,7 +1207,7 @@ function rpds(m){
         var pjLabel=fp.projectId?'<span style="font-size:9px;color:var(--txt-ll);margin-top:6px">📋 项目归档</span>':'<span style="font-size:9px;color:var(--txt-ll);margin-top:6px">✋ 手工录入</span>';
         return '<div class="cd">'+
           (fp.images&&fp.images.length?'<div style="display:flex;gap:6px;margin-bottom:10px;overflow-x:auto;flex-wrap:wrap">'+fp.images.map(function(img){return '<img src="'+img+'" style="width:100px;height:100px;object-fit:cover;border-radius:12px;cursor:pointer" onclick="shLb(this.src)">'}).join('')+'</div>':'<div style="text-align:center;padding:20px;color:var(--txt-ll)">📷 暂无图片</div>')+
-          '<div class="cd-tt"><span class="em">'+(inferPCat(fp)==='包包类'?'👜':inferPCat(fp)==='饰品类'?'💍':inferPCat(fp)==='服饰类'?'👗':'🎨')+'</span>'+eh(fp.projectType||'未知作品')+'</div>'+
+          '<div class="cd-tt"><span class="em">'+catEm(inferPCat(fp))+'</span>'+eh(fp.projectType||'未知作品')+'</div>'+
           '<div style="font-size:13px;color:var(--txt-lt);line-height:1.8"><div><span class="tag tag-pd">'+eh(inferPCat(fp)||'—')+'</span></div><div>📐 尺寸：'+eh(fp.size||'—')+'</div><div>📅 完成：'+(fp.completionDate||'—')+'</div><div>⏱ 时长：'+eh(fp.duration||'—')+'</div>'+
           fbHTML+acHTML+
           (fp.notes?'<div style="margin-top:8px;padding:8px 12px;background:var(--side-bg);border-radius:10px;font-size:12px">💬 '+eh(fp.notes)+'</div>':'')+pjLabel+'</div>'+
@@ -1266,15 +1364,16 @@ function rf(m){
 
     m.innerHTML='<div class="page ac"><div class="pg-hd"><h1 class="pg-tt">🧵 布料仓库</h1><p class="pg-sub">三大分区独立归档，耗用自动关联项目</p></div>'+
       '<div class="cat-tbs">'+cats.map(function(c){return '<button class="cat-tb'+(ac===c?' ac':'')+'" onclick="nv(\'fab\',\''+cids[c]+'\')">'+cics[c]+' '+c+'</button>'}).join('')+'</div>'+
-      '<div class="tb"><input class="fi" id="sFab" placeholder="🔍 搜索布料..." value="'+eh(gs.fab)+'" oninput="gs.fab=this.value;rf(document.getElementById(\'main\'))"><input class="fi" type="date" id="dFab" value="'+gd.fab+'" onchange="gd.fab=this.value;rf(document.getElementById(\'main\'))"><button class="btn btn-pri" onclick="opF(\''+ac+'\')">➕ 新增布料</button></div>'+
+      '<div class="tb"><input class="fi" id="sFab" placeholder="🔍 搜索布料..." value="'+eh(gs.fab)+'" oninput="gs.fab=this.value;rfoc('sFab');rf(document.getElementById(\'main\'))"><input class="fi" type="date" id="dFab" value="'+gd.fab+'" onchange="gd.fab=this.value;rf(document.getElementById(\'main\'))"><button class="btn btn-pri" onclick="opF(\''+ac+'\')">➕ 新增布料</button></div>'+
       (is.length===0?rem('🧶','还没有布料记录'):
-      '<div class="cd" style="padding:0;overflow:hidden"><div class="tbl-w"><table><thead><tr><th>图片</th><th>名称</th><th>材质</th><th>购买尺寸</th><th>耗用尺寸</th><th>库存尺寸</th><th>价格</th><th>同步</th><th>操作</th></tr></thead><tbody>'+
+      '<div class="cd" style="padding:0;overflow:hidden"><div class="tbl-w"><table><thead><tr><th>图片</th><th>名称</th><th>材质</th><th>购买尺寸</th><th>耗用尺寸</th><th>库存尺寸</th><th>价格</th><th>购买途径</th><th>同步</th><th>操作</th></tr></thead><tbody>'+
       rows.map(function(r){var f=r.item;
         return '<tr><td>'+(f.image?'<img src="'+f.image+'" class="tb-img" onclick="shLb(this.src)">':'—')+'</td>'+
           '<td style="font-weight:600">'+eh(f.name||'—')+'</td><td>'+eh(f.material||'—')+'</td>'+
           '<td>'+eh(f.purchaseSize||'—')+'</td><td>'+r.consumed+'</td>'+
           '<td>'+(r.inventory==='—'?'—':r.inventory)+'</td>'+
           '<td class="amt">¥'+(parseFloat(f.purchasePrice)||0).toFixed(2)+'</td>'+
+          '<td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+eh(f.purchaseSource||'')+'">'+eh(f.purchaseSource||'—')+'</td>'+
           '<td><span class="tag tag-'+(f.sync==='是'?'dn':'pd')+'">'+(f.sync||'否')+'</span></td>'+
           '<td><button class="btn btn-sm" onclick="opF(\''+ac+'\',\''+f.id+'\')">✏️</button><button class="btn btn-sm btn-dg" onclick="dlF(\''+f.id+'\')">🗑️</button></td></tr>'
       }).join('')+'</tbody></table></div></div>')+'</div>';
@@ -1340,15 +1439,16 @@ function ra(m){
 
     m.innerHTML='<div class="page ac"><div class="pg-hd"><h1 class="pg-tt">🧷 辅料仓库</h1><p class="pg-sub">精细化辅料分类，耗用自动关联项目</p></div>'+
       '<div class="cat-tbs">'+cats.map(function(c){return '<button class="cat-tb'+(ac===c?' ac':'')+'" onclick="nv(\'acc\',\''+cids[c]+'\')">'+cics[c]+' '+c+'</button>'}).join('')+'</div>'+
-      '<div class="tb"><input class="fi" id="sAcc" placeholder="🔍 搜索辅料..." value="'+eh(gs.acc)+'" oninput="gs.acc=this.value;ra(document.getElementById(\'main\'))"><input class="fi" type="date" id="dAcc" value="'+gd.acc+'" onchange="gd.acc=this.value;ra(document.getElementById(\'main\'))"><button class="btn btn-pri" onclick="opA(\''+ac+'\')">➕ 新增辅料</button></div>'+
+      '<div class="tb"><input class="fi" id="sAcc" placeholder="🔍 搜索辅料..." value="'+eh(gs.acc)+'" oninput="gs.acc=this.value;rfoc('sAcc');ra(document.getElementById(\'main\'))"><input class="fi" type="date" id="dAcc" value="'+gd.acc+'" onchange="gd.acc=this.value;ra(document.getElementById(\'main\'))"><button class="btn btn-pri" onclick="opA(\''+ac+'\')">➕ 新增辅料</button></div>'+
       (is.length===0?rem('🧷','还没有辅料记录'):
-      '<div class="cd" style="padding:0;overflow:hidden"><div class="tbl-w"><table><thead><tr><th>图片</th><th>名称</th><th>规格</th><th>购买数量</th><th>耗用数量</th><th>库存数量</th><th>价格</th><th>同步</th><th>操作</th></tr></thead><tbody>'+
+      '<div class="cd" style="padding:0;overflow:hidden"><div class="tbl-w"><table><thead><tr><th>图片</th><th>名称</th><th>规格</th><th>购买数量</th><th>耗用数量</th><th>库存数量</th><th>价格</th><th>购买途径</th><th>同步</th><th>操作</th></tr></thead><tbody>'+
       rows.map(function(r){var a=r.item;
         return '<tr><td>'+(a.image?'<img src="'+a.image+'" class="tb-img" onclick="shLb(this.src)">':'—')+'</td>'+
           '<td style="font-weight:600">'+eh(a.name||'—')+'</td><td>'+eh(a.spec||'—')+'</td>'+
           '<td>'+eh(a.purchaseQuantity||'0')+'</td><td>'+r.consumed+'</td>'+
           '<td>'+(r.inventory==='—'?'—':r.inventory)+'</td>'+
           '<td class="amt">¥'+(parseFloat(a.purchasePrice)||0).toFixed(2)+'</td>'+
+          '<td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+eh(a.purchaseSource||'')+'">'+eh(a.purchaseSource||'—')+'</td>'+
           '<td><span class="tag tag-'+(a.sync==='是'?'dn':'pd')+'">'+(a.sync||'否')+'</span></td>'+
           '<td><button class="btn btn-sm" onclick="opA(\''+ac+'\',\''+a.id+'\')">✏️</button><button class="btn btn-sm btn-dg" onclick="dlA(\''+a.id+'\')">🗑️</button></td></tr>'
       }).join('')+'</tbody></table></div></div>')+'</div>';
@@ -1401,7 +1501,7 @@ function rt(m){
   function dr(){
     var is=flt(D.tools,gs.tool,gd.tool);
     m.innerHTML='<div class="page ac"><div class="pg-hd"><h1 class="pg-tt">🔧 工具与设备</h1><p class="pg-sub">统一归档所有缝纫设备与手动工具</p></div>'+
-      '<div class="tb"><input class="fi" id="sTool" placeholder="🔍 搜索工具..." value="'+eh(gs.tool)+'" oninput="gs.tool=this.value;rt(document.getElementById(\'main\'))"><input class="fi" type="date" id="dTool" value="'+gd.tool+'" onchange="gd.tool=this.value;rt(document.getElementById(\'main\'))"><button class="btn btn-pri" onclick="opT()">➕ 新增工具</button></div>'+
+      '<div class="tb"><input class="fi" id="sTool" placeholder="🔍 搜索工具..." value="'+eh(gs.tool)+'" oninput="gs.tool=this.value;rfoc('sTool');rt(document.getElementById(\'main\'))"><input class="fi" type="date" id="dTool" value="'+gd.tool+'" onchange="gd.tool=this.value;rt(document.getElementById(\'main\'))"><button class="btn btn-pri" onclick="opT()">➕ 新增工具</button></div>'+
       (is.length===0?rem('🔧','还没有工具设备记录'):
       '<div class="cd" style="padding:0;overflow:hidden"><div class="tbl-w"><table><thead><tr><th>名称</th><th>型号</th><th>数量</th><th>购入价格</th><th>小计</th><th>备注</th><th>日期</th><th>操作</th></tr></thead><tbody>'+
       is.map(function(t){
@@ -1451,7 +1551,75 @@ function svT(eid){
 function dlT(id){cD('确定要删除这条工具记录吗？',function(){D.tools=D.tools.filter(function(t){return t.id!==id});sv(D);rp();ts('工具已删除')})}
 
 // ============================================================
-// 6. 成本花费
+// 6. 图纸库
+// ============================================================
+function rpt(m){
+  gs.ptn=gs.ptn||'';gd.ptn=gd.ptn||'';
+  function dr(){
+    var is=flt(D.patterns||[],gs.ptn,gd.ptn);
+    m.innerHTML='<div class="page ac"><div class="pg-hd"><h1 class="pg-tt">📐 图纸库</h1><p class="pg-sub">图纸收藏与归档，支持多图上传</p></div>'+
+      '<div class="tb"><input class="fi" id="sPtn" placeholder="🔍 搜索图纸..." value="'+eh(gs.ptn)+'" oninput="gs.ptn=this.value;rfoc('sPtn');rpt(document.getElementById(\'main\'))"><input class="fi" type="date" id="dPtn" value="'+gd.ptn+'" onchange="gd.ptn=this.value;rpt(document.getElementById(\'main\'))"><button class="btn btn-pri" onclick="opPT()">➕ 新增图纸</button></div>'+
+      (is.length===0?rem('📐','还没有图纸，点击上方按钮上传第一份图纸'):
+      '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px">'+
+      is.map(function(p){
+        var imgsHTML='';
+        if(p.images&&p.images.length){
+          imgsHTML='<div style="display:flex;gap:6px;margin-bottom:10px;overflow-x:auto;flex-wrap:wrap">'+p.images.slice(0,4).map(function(img){return '<img src="'+img+'" style="width:90px;height:90px;object-fit:cover;border-radius:12px;cursor:pointer" onclick="shLb(this.src)">'}).join('')+(p.images.length>4?'<div style="width:90px;height:90px;display:flex;align-items:center;justify-content:center;background:var(--side-bg);border-radius:12px;font-size:13px;color:var(--txt-lt)">+'+ (p.images.length-4) +'</div>':'')+'</div>';
+        }else{imgsHTML='<div style="text-align:center;padding:20px;color:var(--txt-ll)">📷 暂无图片</div>'}
+        return '<div class="cd">'+
+          imgsHTML+
+          '<div class="cd-tt"><span class="em">📐</span>'+eh(p.name||'未命名图纸')+'</div>'+
+          '<div style="font-size:13px;color:var(--txt-lt);line-height:1.8">'+
+            '<div>💰 价格：<span class="amt">¥'+(parseFloat(p.price)||0).toFixed(2)+'</span></div>'+
+            '<div style="max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+eh(p.purchaseSource||'')+'">🛒 购买途径：'+eh(p.purchaseSource||'—')+'</div>'+
+            (p.notes?'<div style="margin-top:8px;padding:8px 12px;background:var(--side-bg);border-radius:10px;font-size:12px">💬 '+eh(p.notes)+'</div>':'')+
+          '</div>'+
+          '<div style="margin-top:10px;display:flex;gap:6px"><button class="btn btn-sm" onclick="opPT(\''+p.id+'\')">✏️ 编辑</button><button class="btn btn-sm btn-dg" onclick="dlPT(\''+p.id+'\')">🗑️ 删除</button></div></div>';
+      }).join('')+'</div>')+'</div>';
+  }
+  dr();
+}
+
+function opPT(eid){
+  var ex=eid?(D.patterns||[]).filter(function(p){return p.id===eid})[0]:null;
+  var fields=[
+    {name:'name',lb:'图纸名称',ph:'如：大肠发圈图纸、化妆包版型',rq:true},
+    {name:'images',lb:'图纸图片（支持多张）',type:'image'},
+    {name:'price',lb:'价格（元）',type:'number',ph:'0.00'},
+    {name:'purchaseSource',lb:'购买途径',ph:'如：淘宝/小红书/线下材料店'},
+    {name:'notes',lb:'备注',type:'textarea',ph:'纸样编号、文件格式、链接等...'}
+  ];
+  shMo(ex?'编辑图纸':'新增图纸',bF(fields,ex||{}),
+    '<button class="btn" onclick="clMo()">取消</button>'+
+    '<button class="btn btn-pri" onclick="svPT(\''+(eid||'')+'\')">保存</button>');
+}
+
+function svPT(eid){
+  try{
+    var fields=[
+      {name:'name',lb:'名称'},{name:'images',lb:'图片',type:'image'},
+      {name:'price',lb:'价格'},{name:'purchaseSource',lb:'购买途径'},
+      {name:'notes',lb:'备注',type:'textarea'}
+    ];
+    var vs=gV(fields);
+    if(!vs.name){ts('请输入图纸名称');return}
+    if(!D.patterns)D.patterns=[];
+    var ex=eid?D.patterns.filter(function(p){return p.id===eid})[0]:null;
+    if(ex){Object.assign(ex,vs)}else{
+      D.patterns.push({id:gid(),name:vs.name,images:vs.images||[],price:vs.price||'',purchaseSource:vs.purchaseSource||'',notes:vs.notes||'',createdAt:new Date().toISOString().slice(0,10)});
+    }
+    addAct('📐',(eid?'更新':'新增')+'图纸：'+vs.name);
+    sv(D);clMo();rp();ts(eid?'图纸已更新':'图纸已添加');
+  }catch(err){
+    console.error('svPT error',err);
+    ts('图纸保存失败：'+err.message);
+  }
+}
+
+function dlPT(id){cD('确定要删除这条图纸记录吗？',function(){if(D.patterns)D.patterns=D.patterns.filter(function(p){return p.id!==id});sv(D);rp();ts('图纸已删除')})}
+
+// ============================================================
+// 7. 成本花费
 // ============================================================
 function rc(m){
   // 布料
@@ -1508,7 +1676,8 @@ function backupData(){
     '<div>📋 文件名：<b>'+fname+'</b></div>'+
     '<div>📊 项目：'+(D.projects?D.projects.length:0)+' 条 | 🏆 成品：'+(D.finishedProducts?D.finishedProducts.length:0)+' 条</div>'+
     '<div>🧵 布料：'+(D.fabrics?D.fabrics.length:0)+' 条 | 🧷 辅料：'+(D.accessories?D.accessories.length:0)+' 条</div>'+
-    '<div>🔧 工具：'+(D.tools?D.tools.length:0)+' 条 | 📝 动态：'+(D.activities?D.activities.length:0)+' 条</div>'+
+    '<div>🔧 工具：'+(D.tools?D.tools.length:0)+' 条 | 📐 图纸：'+(D.patterns?D.patterns.length:0)+' 条</div>'+
+    '<div>📝 动态：'+(D.activities?D.activities.length:0)+' 条</div>'+
     '<div>📦 数据大小：'+(json.length<1024?json.length+' B':json.length<1048576?(json.length/1024).toFixed(1)+' KB':(json.length/1048576).toFixed(1)+' MB')+'</div></div>';
   shMo('📋 数据备份',
     stat+'<div style="background:var(--side-bg);border-radius:var(--r);padding:12px;max-height:240px;overflow-y:auto;font-family:monospace;font-size:11px;white-space:pre-wrap;word-break:break-all;color:var(--txt);border:1px solid var(--bd-lt)">'+eh(json)+'</div>',
@@ -1540,7 +1709,7 @@ function importData(input){
       if(!data||typeof data!=='object'){ts('❌ 文件格式不正确');return}
       shMo('⚠️ 导入确认',
         '<p style="text-align:center;padding:20px 0;font-size:15px;color:var(--rose)">导入将覆盖当前工作台所有数据，是否继续？</p>'+
-        '<p style="text-align:center;font-size:12px;color:var(--txt-lt)">项目：'+(data.projects?data.projects.length:0)+' 条 | 成品：'+(data.finishedProducts?data.finishedProducts.length:0)+' 条 | 布料：'+(data.fabrics?data.fabrics.length:0)+' 条 | 辅料：'+(data.accessories?data.accessories.length:0)+' 条 | 工具：'+(data.tools?data.tools.length:0)+' 条</p>',
+        '<p style="text-align:center;font-size:12px;color:var(--txt-lt)">项目：'+(data.projects?data.projects.length:0)+' 条 | 成品：'+(data.finishedProducts?data.finishedProducts.length:0)+' 条 | 布料：'+(data.fabrics?data.fabrics.length:0)+' 条 | 辅料：'+(data.accessories?data.accessories.length:0)+' 条 | 工具：'+(data.tools?data.tools.length:0)+' 条 | 图纸：'+(data.patterns?data.patterns.length:0)+' 条</p>',
         '<button class="btn" onclick="clMo()">取消</button>'+
         '<button class="btn btn-dg" onclick="doImport(\''+encodeURIComponent(JSON.stringify(data))+'\')">确认导入</button>');
     }catch(err){ts('❌ 文件格式错误，无法解析')}
@@ -1556,6 +1725,7 @@ function doImport(encoded){
     D.fabrics=data.fabrics||[];
     D.accessories=data.accessories||[];
     D.tools=data.tools||[];
+    D.patterns=data.patterns||[];
     D.activities=data.activities||[];
     sv(D);clMo();rp();ts('✅ 数据已成功导入');
   }catch(err){ts('❌ 导入过程出错')}
