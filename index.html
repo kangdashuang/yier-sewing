@@ -601,39 +601,54 @@ document.addEventListener('click',function(e){if(e.target===document.getElementB
 function compressImg(src,maxSide,quality,cb){
   var img=new Image();
   img.onload=function(){
-    var w=img.width,h=img.height;
-    if(w>maxSide||h>maxSide){
-      if(w>h){h=Math.round(h*maxSide/w);w=maxSide}
-      else{w=Math.round(w*maxSide/h);h=maxSide}
-    }
-    var cv=document.createElement('canvas');
-    cv.width=w;cv.height=h;
-    var ctx=cv.getContext('2d');
-    // 白色背景（避免 PNG 透明转 JPEG 变黑）
-    ctx.fillStyle='#fff';
-    ctx.fillRect(0,0,w,h);
-    ctx.drawImage(img,0,0,w,h);
-    cb(cv.toDataURL('image/jpeg',quality));
+    try{
+      var w=img.width,h=img.height;
+      if(!w||!h){cb(src);return}
+      if(w>maxSide||h>maxSide){
+        if(w>h){h=Math.round(h*maxSide/w);w=maxSide}
+        else{w=Math.round(w*maxSide/h);h=maxSide}
+      }
+      var cv=document.createElement('canvas');
+      cv.width=w;cv.height=h;
+      var ctx=cv.getContext('2d');
+      // 白色背景（避免 PNG 透明转 JPEG 变黑）
+      ctx.fillStyle='#fff';
+      ctx.fillRect(0,0,w,h);
+      ctx.drawImage(img,0,0,w,h);
+      var data=cv.toDataURL('image/jpeg',quality);
+      cb(data);
+    }catch(err){cb(src)}
   };
   img.onerror=function(){cb(src)}
   img.src=src;
 }
+function isImg(file){
+  if(file.type&&file.type.match(/image.*/))return true;
+  var ext=(file.name||'').split('.').pop().toLowerCase();
+  return ['jpg','jpeg','png','gif','webp','bmp','heic','heif'].indexOf(ext)!==-1;
+}
 function hiU(input,pid){
   var fs=input.files;var c=document.getElementById(pid);if(!c)return;
+  if(!fs||!fs.length){ts('请选择图片文件');return}
   for(var i=0;i<fs.length;i++){
     (function(file){
-      if(!file.type.match(/image.*/)){ts('请选择图片文件');return}
+      if(!isImg(file)){ts('请选择图片文件（支持 jpg/png/gif/webp 等）');return}
+      if(file.size&&file.size>20*1024*1024){ts('单张图片不能超过 20MB');return}
       var r=new FileReader();
       r.onload=function(e){
         compressImg(e.target.result,1024,0.75,function(data){
+          if(!data){ts('图片处理失败，请重试');return}
           var d=document.createElement('div');d.className='iw';
           d.innerHTML='<img src="'+data+'" onclick="shLb(this.src)" alt=""><button class="im-x" onclick="this.parentElement.remove()">✕</button>';
           d.setAttribute('data-img',data);c.appendChild(d);
         });
       };
+      r.onerror=function(){ts('图片读取失败，请重试')}
       r.readAsDataURL(file);
     })(fs[i]);
   }
+  // 清空 input，允许重复选择同一张图片
+  input.value='';
 }
 function gImgs(pid){var c=document.getElementById(pid);if(!c)return[];var is=c.querySelectorAll('.iw');var r=[];is.forEach(function(w){var d=w.getAttribute('data-img');if(d)r.push(d)});return r}
 
