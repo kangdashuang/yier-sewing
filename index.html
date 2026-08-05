@@ -254,6 +254,7 @@ tr:hover td{background:rgba(164,139,114,.04)}
 .fui{display:none}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
 </head>
 <body>
 
@@ -630,20 +631,41 @@ function isImg(file){
   var ext=(file.name||'').split('.').pop().toLowerCase();
   return ['jpg','jpeg','png','gif','webp','bmp','heic','heif'].indexOf(ext)!==-1;
 }
+function isHeic(file){
+  var ext=(file.name||'').split('.').pop().toLowerCase();
+  return ext==='heic'||ext==='heif';
+}
+function convertHeic(file,callback){
+  // 使用 heic2any 将 HEIC 转为 JPEG
+  var r=new FileReader();
+  r.onload=function(e){
+    try{
+      heic2any({blob:new Blob([e.target.result]),toType:'image/jpeg',quality:0.8})
+        .then(function(jpegBlob){
+          var fr=new FileReader();
+          fr.onload=function(ev){callback(ev.target.result)};
+          fr.onerror=function(){callback(null)};
+          fr.readAsDataURL(jpegBlob);
+        })
+        .catch(function(err){console.error('HEIC转换失败',err);callback(null)});
+    }catch(err){console.error('HEIC转换异常',err);callback(null)}
+  };
+  r.onerror=function(){callback(null)};
+  r.readAsArrayBuffer(file);
+}
 function hiU(input,pid){
   var fs=input.files;var c=document.getElementById(pid);if(!c)return;
   if(!fs||!fs.length){ts('请选择图片文件');return}
   var ok=0,fail=0;
   for(var i=0;i<fs.length;i++){
     (function(file){
-      if(!isImg(file)){ts('请选择图片文件（支持 jpg/png/gif/webp 等）');return}
+      if(!isImg(file)){ts('请选择图片文件（支持 jpg/png/gif/webp/heic 等）');return}
       if(file.size&&file.size>20*1024*1024){ts('单张图片不能超过 20MB');return}
-      var r=new FileReader();
-      r.onload=function(e){
-        compressImg(e.target.result,1024,0.75,function(data){
+      var processImg=function(dataUrl){
+        compressImg(dataUrl,1024,0.75,function(data){
           if(!isValidDataUrl(data)){
             fail++;
-            ts('图片处理失败，请转换为 jpg/png 格式后重试');
+            ts('图片处理失败，请重试');
             return;
           }
           ok++;
@@ -653,8 +675,18 @@ function hiU(input,pid){
           if(ok+fail===fs.length && ok>0){ts('已添加 '+ok+' 张图片')}
         });
       };
-      r.onerror=function(){fail++;ts('图片读取失败，请重试')}
-      r.readAsDataURL(file);
+      if(isHeic(file)){
+        // HEIC 文件：先用 heic2any 转为 JPEG DataURL，再压缩
+        convertHeic(file,function(dataUrl){
+          if(dataUrl&&isValidDataUrl(dataUrl)){processImg(dataUrl)}
+          else{fail++;ts('HEIC 转换失败，请尝试拍照时选择"兼容性最佳"格式')}
+        });
+      }else{
+        var r=new FileReader();
+        r.onload=function(e){processImg(e.target.result)};
+        r.onerror=function(){fail++;ts('图片读取失败，请重试')};
+        r.readAsDataURL(file);
+      }
     })(fs[i]);
   }
   // 清空 input，允许重复选择同一张图片

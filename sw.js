@@ -1,8 +1,9 @@
-const CACHE_NAME = 'yier-sewing-v8';
+const CACHE_NAME = 'yier-sewing-v9';
 const ASSETS = [
   './',
   './index.html',
-  './manifest.json'
+  './manifest.json',
+  'https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js'
 ];
 
 self.addEventListener('install', event => {
