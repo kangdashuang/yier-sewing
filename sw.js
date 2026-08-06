@@ -25,6 +25,18 @@ self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
   // 不要缓存 Supabase API 请求
   if (url.hostname.includes('supabase.co')) return;
+  // 导航请求（HTML）走 network-first，确保每次打开都是最新版本
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request).then(response => {
+        const clone = response.clone();
+        caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+        return response;
+      }).catch(() => caches.match(event.request))
+    );
+    return;
+  }
+  // 其他资源走 cache-first + 后台更新
   event.respondWith(
     caches.match(event.request).then(cached => {
       const fetched = fetch(event.request).then(response => {
