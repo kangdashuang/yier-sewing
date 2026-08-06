@@ -637,12 +637,23 @@ function isHeic(file){
 }
 function convertHeic(file,callback){
   // 使用 libheif-js@1.19 将 HEIC 解码到 canvas，再转 JPEG DataURL
-  if(typeof libheif==='undefined'){callback(null,'HEIC解码库未加载，请检查网络');return}
+  // libheif-bundle.js 通过 UMD 暴露 libheif.default（含 HeifDecoder/HeifContext）
+  var heifLib=(typeof libheif!=='undefined')?(libheif.default||libheif):null;
+  if(!heifLib){callback(null,'HEIC解码库未加载，请检查网络');return}
   var r=new FileReader();
   r.onload=function(e){
     try{
-      var decoder=new libheif.HeifDecoder();
-      var images=decoder.decode(new Uint8Array(e.target.result));
+      var images=null;
+      if(heifLib.HeifDecoder){
+        // 新 API（libheif-js 1.17+）
+        var decoder=new heifLib.HeifDecoder();
+        images=decoder.decode(new Uint8Array(e.target.result));
+      }else if(heifLib.HeifContext){
+        // 旧 API（libheif-js 1.16 及更早）
+        var ctx=new heifLib.HeifContext();
+        ctx.addImage(new Uint8Array(e.target.result));
+        images=ctx.images;
+      }else{callback(null,'HEIC API未找到');return}
       if(!images||!images.length){callback(null,'HEIC解析失败：无图像');return}
       var img=images[0];
       var width=img.get_width();
