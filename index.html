@@ -637,6 +637,7 @@ function isHeic(file){
 }
 function convertHeic(file,callback){
   // 使用 heic2any 将 HEIC 转为 JPEG
+  if(typeof heic2any==='undefined'){callback(null,'HEIC解码库未加载，请检查网络');return}
   var r=new FileReader();
   r.onload=function(e){
     try{
@@ -644,13 +645,19 @@ function convertHeic(file,callback){
         .then(function(jpegBlob){
           var fr=new FileReader();
           fr.onload=function(ev){callback(ev.target.result)};
-          fr.onerror=function(){callback(null)};
+          fr.onerror=function(){callback(null,'读取JPEG失败')};
           fr.readAsDataURL(jpegBlob);
         })
-        .catch(function(err){console.error('HEIC转换失败',err);callback(null)});
-    }catch(err){console.error('HEIC转换异常',err);callback(null)}
+        .catch(function(err){
+          console.error('HEIC转换失败',err);
+          callback(null,err&&(err.message||err.toString())||'未知错误');
+        });
+    }catch(err){
+      console.error('HEIC转换异常',err);
+      callback(null,err&&(err.message||err.toString())||'未知错误');
+    }
   };
-  r.onerror=function(){callback(null)};
+  r.onerror=function(){callback(null,'文件读取失败')};
   r.readAsArrayBuffer(file);
 }
 function hiU(input,pid){
@@ -677,9 +684,14 @@ function hiU(input,pid){
       };
       if(isHeic(file)){
         // HEIC 文件：先用 heic2any 转为 JPEG DataURL，再压缩
-        convertHeic(file,function(dataUrl){
+        convertHeic(file,function(dataUrl,errMsg){
           if(dataUrl&&isValidDataUrl(dataUrl)){processImg(dataUrl)}
-          else{fail++;ts('HEIC 转换失败，请尝试拍照时选择"兼容性最佳"格式')}
+          else{
+            fail++;
+            var msg='HEIC 转换失败';
+            if(errMsg)msg+='：'+errMsg;
+            ts(msg,4000);
+          }
         });
       }else{
         var r=new FileReader();
