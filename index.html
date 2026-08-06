@@ -283,14 +283,6 @@ tr:hover td{background:rgba(164,139,114,.04)}
   <div class="side-hd"><span class="side-logo">🧵</span><span class="side-tt">一二的缝纫</span></div>
   <nav class="side-nav" id="sideNav"></nav>
   <div class="side-ft">
-    <div class="side-deco" style="display:flex;justify-content:center;gap:6px;margin:8px 0 4px">
-      <span title="星星人" style="display:inline-block;width:32px;height:32px">
-      <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><circle cx="32" cy="36" r="18" fill="#f4b8a8"/><circle cx="26" cy="36" r="2" fill="#3a2e26"/><circle cx="38" cy="36" r="2" fill="#3a2e26"/><circle cx="24" cy="42" r="2.5" fill="#f48b8b" opacity=".5"/><circle cx="40" cy="42" r="2.5" fill="#f48b8b" opacity=".5"/><path d="M28 44 Q32 47 36 44" stroke="#3a2e26" stroke-width="1.5" fill="none" stroke-linecap="round"/><polygon points="32,4 36,18 28,18" fill="#f4c95d"/><polygon points="32,8 34,16 30,16" fill="#fff7e0"/><circle cx="32" cy="14" r="1.5" fill="#f4c95d"/></svg>
-      </span>
-      <span title="小裁缝" style="display:inline-block;width:32px;height:32px">
-      <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><circle cx="32" cy="34" r="18" fill="#fce5d0"/><circle cx="26" cy="34" r="2" fill="#3a2e26"/><circle cx="38" cy="34" r="2" fill="#3a2e26"/><circle cx="24" cy="40" r="2.5" fill="#f4a8a8" opacity=".5"/><circle cx="40" cy="40" r="2.5" fill="#f4a8a8" opacity=".5"/><path d="M28 42 Q32 45 36 42" stroke="#3a2e26" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M16 28 Q32 14 48 28 Q44 36 32 36 Q20 36 16 28 Z" fill="#7a6048"/></svg>
-      </span>
-    </div>
     <div class="sync-st" style="text-align:center;font-size:12px;color:var(--txt-lt);margin-bottom:8px">☁️ 准备同步</div>
     <button class="btn btn-sm" style="width:100%;justify-content:center" onclick="openDataManage()">💾 数据管理</button>
   </div>
@@ -441,10 +433,14 @@ function setSyncStatus(st){
   if(st === 'syncing') txt = '☁️ 同步中...';
   else if(st === 'ok') txt = '✅ 已同步';
   else if(st === 'error'){
-    txt = '⚠️ 同步失败：' + (_syncErr || '未知错误');
-    if(_syncErr && _syncErr !== _lastErrToast){ _lastErrToast = _syncErr; ts('同步失败：' + _syncErr, 5000); }
+    txt = '⚠️ 同步异常：' + (_syncErr || '未知错误');
+    if(_syncErr && _syncErr !== _lastErrToast){ _lastErrToast = _syncErr; ts('同步异常：' + _syncErr, 5000); }
   }
-  else if(st === 'offline') txt = '📴 离线模式';
+  else if(st === 'offline'){
+    // 离线模式：可能是没配置 supabase 或网络问题
+    if(_sb) txt = '☁️ 同步待连接';
+    else txt = '📴 本地模式（未配置云端）';
+  }
   else txt = '☁️ 准备同步';
   var els = document.querySelectorAll('.sync-st');
   els.forEach(function(el){ el.textContent = txt; el.title = txt; });
@@ -869,7 +865,7 @@ var gs={},gd={};
 // ============================================================
 // 空状态
 // ============================================================
-function rem(ic,tx){return '<div class="cd"><div class="emp"><div class="emp-ic">'+ic+'</div><div class="emp-tx">'+tx+'</div><div class="emp-deco" style="display:flex;justify-content:center;gap:6px;margin-top:14px"><svg viewBox="0 0 64 64" width="40" height="40" xmlns="http://www.w3.org/2000/svg"><circle cx="32" cy="40" r="16" fill="#f4b8a8"/><circle cx="26" cy="40" r="2" fill="#3a2e26"/><circle cx="38" cy="40" r="2" fill="#3a2e26"/><path d="M27 46 Q32 49 37 46" stroke="#3a2e26" stroke-width="1.5" fill="none" stroke-linecap="round"/><polygon points="32,16 36,28 28,28" fill="#f4c95d"/><circle cx="32" cy="24" r="1.5" fill="#fff7e0"/></svg><svg viewBox="0 0 64 64" width="40" height="40" xmlns="http://www.w3.org/2000/svg"><path d="M14 18 L34 50 L54 18 Z" fill="#a48b72" opacity=".5"/><circle cx="34" cy="32" r="2" fill="#7a6048"/><path d="M30 36 L34 32 L38 36 L34 40 Z" fill="#a48b72"/></svg></div></div></div>'}
+function rem(ic,tx){return '<div class="cd"><div class="emp"><div class="emp-ic">'+ic+'</div><div class="emp-tx">'+tx+'</div></div></div>'}
 
 // ============================================================
 // 页面路由
@@ -948,7 +944,7 @@ function rd(m){
     carImgs=[{src:'',cat:'',name:'还没有作品',placeholder:true}];
   }
   carHTML='<div class="cd dash-car" id="dashCarousel" style="margin-bottom:16px">'+
-    '<div class="cd-tt"><span class="em">🎠</span>作品回顾 · 毛泽东选集</div>'+
+    '<div class="cd-tt"><span class="em">🎠</span>作品回顾</div>'+
     '<div style="position:relative;border-radius:var(--r-lg);overflow:hidden;background:var(--side-bg);min-height:280px">'+
     carImgs.map(function(im,i){
       var imHTML=im.placeholder?
@@ -956,19 +952,18 @@ function rd(m){
         '<img src="'+im.src+'" style="width:100%;height:280px;object-fit:cover;cursor:pointer" onclick="shLb(this.src)" onerror="this.style.display=\'none\'">';
       return '<div class="car-slide" data-idx="'+i+'" style="'+(i===0?'':'display:none')+'">'+
         imHTML+
-        '<div style="padding:14px 18px;background:var(--card)">'+
-        '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">'+
-          '<span class="tag tag-pd">'+(im.cat||'未分类')+'</span>'+
-          '<span style="font-weight:700;font-size:15px;color:var(--txt)">'+eh(im.name)+'</span>'+
-        '</div>'+
-        '<div style="font-size:13px;color:var(--txt-lt);font-style:italic;line-height:1.7">📜 '+eh(_maoQuotes[(Math.floor(Math.random()*_maoQuotes.length))])+'</div>'+
-        '</div></div>';
+        '</div>';
     }).join('')+
     (carImgs.length>1?
     '<button class="btn btn-ic car-prev" onclick="carMove(-1)" style="position:absolute;top:120px;left:12px;background:rgba(255,255,255,.85)">‹</button>'+
     '<button class="btn btn-ic car-next" onclick="carMove(1)" style="position:absolute;top:120px;right:12px;background:rgba(255,255,255,.85)">›</button>'+
     '<div style="position:absolute;top:14px;right:18px;background:rgba(77,66,56,.5);color:#fff;font-size:11px;padding:3px 10px;border-radius:20px">🎠 <span id="carIdx">1</span> / '+carImgs.length+'</div>':'')+
-    '</div></div>';
+    '</div></div>'+
+    // 毛选语录放在轮播下方独立卡片
+    '<div class="cd mao-quote" style="background:linear-gradient(135deg,var(--card),var(--side-bg));border-left:3px solid var(--pri-dk)">'+
+      '<div style="font-size:12px;color:var(--pri-dk);font-weight:600;margin-bottom:6px;letter-spacing:1px">📜 毛泽东选集</div>'+
+      '<div style="font-size:13px;color:var(--txt);font-style:italic;line-height:1.7">'+eh(_maoQuotes[Math.floor(Math.random()*_maoQuotes.length)])+'</div>'+
+    '</div>';
 
   m.innerHTML='<div class="page ac"><div class="pg-hd"><h1 class="pg-tt">📊 总览工作台</h1></div>'+
     carHTML+
@@ -985,13 +980,7 @@ function rd(m){
     '<div class="ql-i" onclick="nv(\'pattern\')"><span class="ql-ic">📐</span>图纸库</div>'+
     '<div class="ql-i" onclick="nv(\'proj\',\'prod-list\')"><span class="ql-ic">🏆</span>成品欣赏</div>'+
     '<div class="ql-i" onclick="nv(\'cost\')"><span class="ql-ic">💰</span>成本明细</div></div></div>'+
-    '<div class="cd dash-act" style="margin-top:16px"><div class="cd-tt"><span class="em">🕐</span>近期动态</div><div class="act-ls">'+(D.activities.length===0?rem('📭','暂无动态').replace('<div class="cd">','').replace('</div>',''):D.activities.slice(0,8).map(function(a){return '<div class="act-i"><span class="act-ic">'+a.icon+'</span><span class="act-tx">'+a.text+'</span><span class="act-tm">'+a.time+'</span></div>'}).join(''))+'</div></div>'+
-    // 装饰小区域：星星人 + 缝纫元素
-    '<div class="dash-deco" style="display:flex;align-items:center;justify-content:center;gap:12px;margin-top:18px;padding:14px;background:linear-gradient(135deg,var(--side-bg),var(--card));border-radius:var(--r-lg)">'+
-      '<span style="display:inline-block;width:64px;height:64px;flex-shrink:0"><svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><circle cx="32" cy="38" r="20" fill="#f4b8a8"/><circle cx="25" cy="38" r="2.2" fill="#3a2e26"/><circle cx="39" cy="38" r="2.2" fill="#3a2e26"/><circle cx="23" cy="44" r="3" fill="#f48b8b" opacity=".5"/><circle cx="41" cy="44" r="3" fill="#f48b8b" opacity=".5"/><path d="M27 46 Q32 50 37 46" stroke="#3a2e26" stroke-width="1.8" fill="none" stroke-linecap="round"/><polygon points="32,2 38,20 26,20" fill="#f4c95d"/><polygon points="32,7 35,18 29,18" fill="#fff7e0"/><circle cx="32" cy="13" r="2" fill="#f4c95d"/><path d="M14 50 Q24 56 32 52 Q40 56 50 50" stroke="#7a6048" stroke-width="1.5" fill="none" opacity=".4"/></svg></span>'+
-      '<div style="flex:1;text-align:left"><div style="font-size:13px;color:var(--pri-dk);font-weight:600;margin-bottom:4px">🌟 一二来啦！</div><div style="font-size:12px;color:var(--txt-lt);line-height:1.6">每一针每一线，都是温柔的小心思<br>愿你今天也做出满意的作品 ✨</div></div>'+
-      '<span style="display:inline-block;width:48px;height:48px;flex-shrink:0"><svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><circle cx="32" cy="32" r="6" fill="#a48b72"/><circle cx="32" cy="32" r="2" fill="#f2ebe1"/><g stroke="#a48b72" stroke-width="1.5" stroke-linecap="round"><line x1="32" y1="22" x2="32" y2="18"/><line x1="32" y1="46" x2="32" y2="42"/><line x1="22" y1="32" x2="18" y2="32"/><line x1="46" y1="32" x2="42" y2="32"/><line x1="25" y1="25" x2="22" y2="22"/><line x1="39" y1="39" x2="42" y2="42"/><line x1="25" y1="39" x2="22" y2="42"/><line x1="39" y1="25" x2="42" y2="22"/></g><path d="M52 14 Q56 12 58 16 Q56 18 52 16" stroke="#a48b72" stroke-width="2" fill="none"/></svg></span>'+
-    '</div>';
+    '<div class="cd dash-act" style="margin-top:16px"><div class="cd-tt"><span class="em">🕐</span>近期动态</div><div class="act-ls">'+(D.activities.length===0?rem('📭','暂无动态').replace('<div class="cd">','').replace('</div>',''):D.activities.slice(0,8).map(function(a){return '<div class="act-i"><span class="act-ic">'+a.icon+'</span><span class="act-tx">'+a.text+'</span><span class="act-tm">'+a.time+'</span></div>'}).join(''))+'</div></div>';
   // 启动轮播定时器（如果有多张）
   if(carImgs.length>1){
     if(window._carTimer)clearInterval(window._carTimer);
@@ -1390,7 +1379,7 @@ function rpds(m){
             var dest=fp.destination||'自留';
             var isKeep=dest==='自留';
             return '<div class="stamp stamp-'+(isKeep?'keep':'gift')+'" style="position:absolute;right:6px;bottom:6px"><div class="stamp-box">'+
-              '<div class="stamp-icon">'+(isKeep?'🏠':'🎁')+'</div>'+
+              '<div class="stamp-icon">'+(isKeep?'💖':'🎁')+'</div>'+
               '<div class="stamp-tx">'+dest+'</div>'+
               '</div></div>';
           })()
@@ -1399,7 +1388,7 @@ function rpds(m){
             var dest=fp.destination||'自留';
             var isKeep=dest==='自留';
             return '<div class="stamp stamp-'+(isKeep?'keep':'gift')+'" style="position:absolute;right:10px;top:10px"><div class="stamp-box">'+
-              '<div class="stamp-icon">'+(isKeep?'🏠':'🎁')+'</div>'+
+              '<div class="stamp-icon">'+(isKeep?'💖':'🎁')+'</div>'+
               '<div class="stamp-tx">'+dest+'</div>'+
               '</div></div>';
           })()
