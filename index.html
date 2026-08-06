@@ -203,6 +203,18 @@ tr:hover td{background:rgba(164,139,114,.04)}
 
 /* ===== Toast ===== */
 .toast{position:fixed;bottom:calc(30px + var(--safe-b));left:50%;transform:translateX(-50%);background:var(--txt);color:#fff;padding:10px 24px;border-radius:24px;font-size:13px;z-index:500;animation:toIn .3s ease,toOut .3s ease 2.2s forwards;white-space:nowrap;pointer-events:none}
+/* 印章样式：作品归属 */
+.stamp{transform:rotate(-8deg);transition:transform .25s;z-index:5}
+.stamp:hover{transform:rotate(-8deg) scale(1.08)}
+.stamp-box{display:flex;flex-direction:column;align-items:center;justify-content:center;width:54px;height:54px;border-radius:50%;font-weight:700;letter-spacing:1px;box-shadow:0 2px 8px rgba(122,96,72,.18);border:2px dashed currentColor;background:rgba(255,255,255,.92);animation:stampIn .5s ease}
+.stamp-keep{color:#8ea38a}
+.stamp-keep .stamp-box{background:linear-gradient(135deg,#e8f0e5,#f4f8f1)}
+.stamp-gift{color:#b2807d}
+.stamp-gift .stamp-box{background:linear-gradient(135deg,#f5e6e5,#faf0ef)}
+.stamp-icon{font-size:18px;line-height:1;margin-bottom:2px}
+.stamp-tx{font-size:10px;font-weight:700;letter-spacing:1px}
+@keyframes stampIn{0%{transform:rotate(-8deg) scale(2);opacity:0}60%{transform:rotate(-8deg) scale(.9);opacity:1}100%{transform:rotate(-8deg) scale(1);opacity:1}}
+.stamp:hover{animation-play-state:paused}
 @keyframes toIn{from{opacity:0;transform:translateX(-50%) translateY(16px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
 @keyframes toOut{from{opacity:1}to{opacity:0}}
 
@@ -271,6 +283,14 @@ tr:hover td{background:rgba(164,139,114,.04)}
   <div class="side-hd"><span class="side-logo">🧵</span><span class="side-tt">一二的缝纫</span></div>
   <nav class="side-nav" id="sideNav"></nav>
   <div class="side-ft">
+    <div class="side-deco" style="display:flex;justify-content:center;gap:6px;margin:8px 0 4px">
+      <span title="星星人" style="display:inline-block;width:32px;height:32px">
+      <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><circle cx="32" cy="36" r="18" fill="#f4b8a8"/><circle cx="26" cy="36" r="2" fill="#3a2e26"/><circle cx="38" cy="36" r="2" fill="#3a2e26"/><circle cx="24" cy="42" r="2.5" fill="#f48b8b" opacity=".5"/><circle cx="40" cy="42" r="2.5" fill="#f48b8b" opacity=".5"/><path d="M28 44 Q32 47 36 44" stroke="#3a2e26" stroke-width="1.5" fill="none" stroke-linecap="round"/><polygon points="32,4 36,18 28,18" fill="#f4c95d"/><polygon points="32,8 34,16 30,16" fill="#fff7e0"/><circle cx="32" cy="14" r="1.5" fill="#f4c95d"/></svg>
+      </span>
+      <span title="小裁缝" style="display:inline-block;width:32px;height:32px">
+      <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><circle cx="32" cy="34" r="18" fill="#fce5d0"/><circle cx="26" cy="34" r="2" fill="#3a2e26"/><circle cx="38" cy="34" r="2" fill="#3a2e26"/><circle cx="24" cy="40" r="2.5" fill="#f4a8a8" opacity=".5"/><circle cx="40" cy="40" r="2.5" fill="#f4a8a8" opacity=".5"/><path d="M28 42 Q32 45 36 42" stroke="#3a2e26" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M16 28 Q32 14 48 28 Q44 36 32 36 Q20 36 16 28 Z" fill="#7a6048"/></svg>
+      </span>
+    </div>
     <div class="sync-st" style="text-align:center;font-size:12px;color:var(--txt-lt);margin-bottom:8px">☁️ 准备同步</div>
     <button class="btn btn-sm" style="width:100%;justify-content:center" onclick="openDataManage()">💾 数据管理</button>
   </div>
@@ -381,8 +401,18 @@ async function syncCloud(force){
   if(!_sb) return;
   if(_syncBusy && !force){ if(_syncTimer) clearTimeout(_syncTimer); _syncTimer = setTimeout(function(){ syncCloud(true); }, 1200); return; }
   _syncBusy = true; setSyncStatus('syncing');
+  // 超时保护：10秒未响应强制解除 syncing 状态（避免移动网络差时永远卡"同步中"）
+  var _timedOut = false;
+  var _timeoutId = setTimeout(function(){
+    _timedOut = true;
+    _syncErr = '同步超时（网络较慢，已自动停止）';
+    setSyncStatus('offline');
+    _syncBusy = false;
+  }, 10000);
   try{
     var {error} = await _sb.from('app_data').upsert({id:'main', data:D, updated_at:new Date().toISOString()}, {onConflict:'id'});
+    if(_timedOut) return; // 已经超时处理过
+    clearTimeout(_timeoutId);
     if(error){
       _syncErr = (error.message||'同步失败') + ' [code:'+(error.code||'unknown')+']';
       setSyncStatus('error');
@@ -390,6 +420,8 @@ async function syncCloud(force){
       _syncErr = ''; setSyncStatus('ok');
     }
   }catch(e){
+    if(_timedOut) return;
+    clearTimeout(_timeoutId);
     console.error('syncCloud', e);
     _syncErr = e.message || '同步失败';
     setSyncStatus('error');
@@ -792,7 +824,42 @@ function flt(it,tm,df){
   if(df){r=r.filter(function(i){if(!i.createdAt)return true;return i.createdAt.indexOf(df)===0})}
   return r;
 }
-function rfoc(id){setTimeout(function(){var e=document.getElementById(id);if(e){e.focus();try{var v=e.value.length;e.setSelectionRange(v,v)}catch(_){}}},0)}
+function rfoc(id){
+  // IME 输入中跳过重置，避免中文拼音输入时焦点丢失
+  if(window._imeActive)return;
+  setTimeout(function(){
+    var e=document.getElementById(id);
+    if(!e)return;
+    if(window._imeActive)return;
+    e.focus();
+    try{var v=e.value.length;e.setSelectionRange(v,v)}catch(_){}
+  },0)
+}
+
+// 全局 IME 状态监听（避免中文输入时丢焦点）
+window._imeActive=false;
+document.addEventListener('compositionstart',function(){window._imeActive=true},true);
+document.addEventListener('compositionend',function(){window._imeActive=false},true);
+
+// 搜索框统一绑定：IME 拼音中不触发重渲染，IME 结束后立即触发
+function bindSrch(inputId,key,renderFn){
+  var el=document.getElementById(inputId);
+  if(!el)return;
+  var timer=null;
+  el.addEventListener('input',function(e){
+    if(window._imeActive)return; // 拼音过程中不重渲染
+    if(timer)clearTimeout(timer);
+    timer=setTimeout(function(){
+      gs[key]=e.target.value;
+      renderFn();
+    },180);
+  });
+  el.addEventListener('compositionend',function(e){
+    if(timer)clearTimeout(timer);
+    gs[key]=e.target.value;
+    renderFn();
+  });
+}
 
 // ============================================================
 // 全局过滤状态
@@ -802,7 +869,7 @@ var gs={},gd={};
 // ============================================================
 // 空状态
 // ============================================================
-function rem(ic,tx){return '<div class="cd"><div class="emp"><div class="emp-ic">'+ic+'</div><div class="emp-tx">'+tx+'</div></div></div>'}
+function rem(ic,tx){return '<div class="cd"><div class="emp"><div class="emp-ic">'+ic+'</div><div class="emp-tx">'+tx+'</div><div class="emp-deco" style="display:flex;justify-content:center;gap:6px;margin-top:14px"><svg viewBox="0 0 64 64" width="40" height="40" xmlns="http://www.w3.org/2000/svg"><circle cx="32" cy="40" r="16" fill="#f4b8a8"/><circle cx="26" cy="40" r="2" fill="#3a2e26"/><circle cx="38" cy="40" r="2" fill="#3a2e26"/><path d="M27 46 Q32 49 37 46" stroke="#3a2e26" stroke-width="1.5" fill="none" stroke-linecap="round"/><polygon points="32,16 36,28 28,28" fill="#f4c95d"/><circle cx="32" cy="24" r="1.5" fill="#fff7e0"/></svg><svg viewBox="0 0 64 64" width="40" height="40" xmlns="http://www.w3.org/2000/svg"><path d="M14 18 L34 50 L54 18 Z" fill="#a48b72" opacity=".5"/><circle cx="34" cy="32" r="2" fill="#7a6048"/><path d="M30 36 L34 32 L38 36 L34 40 Z" fill="#a48b72"/></svg></div></div></div>'}
 
 // ============================================================
 // 页面路由
@@ -903,7 +970,7 @@ function rd(m){
     '<div style="position:absolute;top:14px;right:18px;background:rgba(77,66,56,.5);color:#fff;font-size:11px;padding:3px 10px;border-radius:20px">🎠 <span id="carIdx">1</span> / '+carImgs.length+'</div>':'')+
     '</div></div>';
 
-  m.innerHTML='<div class="page ac"><div class="pg-hd"><h1 class="pg-tt">📊 总览工作台</h1><p class="pg-sub">所有数据自动统计，实时更新，一目了然</p></div>'+
+  m.innerHTML='<div class="page ac"><div class="pg-hd"><h1 class="pg-tt">📊 总览工作台</h1></div>'+
     carHTML+
     '<div class="st-cds">'+
     '<div class="st-cd" onclick="nv(\'proj\',\'proj-list\')"><div class="st-ic">📌</div><div class="st-vl">'+pc+'</div><div class="st-lb">待办任务数</div>'+stTypeH(sP.bag,sP.jewelry,sP.cloth)+'</div>'+
@@ -918,7 +985,13 @@ function rd(m){
     '<div class="ql-i" onclick="nv(\'pattern\')"><span class="ql-ic">📐</span>图纸库</div>'+
     '<div class="ql-i" onclick="nv(\'proj\',\'prod-list\')"><span class="ql-ic">🏆</span>成品欣赏</div>'+
     '<div class="ql-i" onclick="nv(\'cost\')"><span class="ql-ic">💰</span>成本明细</div></div></div>'+
-    '<div class="cd dash-act" style="margin-top:16px"><div class="cd-tt"><span class="em">🕐</span>近期动态</div><div class="act-ls">'+(D.activities.length===0?rem('📭','暂无动态').replace('<div class="cd">','').replace('</div>',''):D.activities.slice(0,8).map(function(a){return '<div class="act-i"><span class="act-ic">'+a.icon+'</span><span class="act-tx">'+a.text+'</span><span class="act-tm">'+a.time+'</span></div>'}).join(''))+'</div></div>';
+    '<div class="cd dash-act" style="margin-top:16px"><div class="cd-tt"><span class="em">🕐</span>近期动态</div><div class="act-ls">'+(D.activities.length===0?rem('📭','暂无动态').replace('<div class="cd">','').replace('</div>',''):D.activities.slice(0,8).map(function(a){return '<div class="act-i"><span class="act-ic">'+a.icon+'</span><span class="act-tx">'+a.text+'</span><span class="act-tm">'+a.time+'</span></div>'}).join(''))+'</div></div>'+
+    // 装饰小区域：星星人 + 缝纫元素
+    '<div class="dash-deco" style="display:flex;align-items:center;justify-content:center;gap:12px;margin-top:18px;padding:14px;background:linear-gradient(135deg,var(--side-bg),var(--card));border-radius:var(--r-lg)">'+
+      '<span style="display:inline-block;width:64px;height:64px;flex-shrink:0"><svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><circle cx="32" cy="38" r="20" fill="#f4b8a8"/><circle cx="25" cy="38" r="2.2" fill="#3a2e26"/><circle cx="39" cy="38" r="2.2" fill="#3a2e26"/><circle cx="23" cy="44" r="3" fill="#f48b8b" opacity=".5"/><circle cx="41" cy="44" r="3" fill="#f48b8b" opacity=".5"/><path d="M27 46 Q32 50 37 46" stroke="#3a2e26" stroke-width="1.8" fill="none" stroke-linecap="round"/><polygon points="32,2 38,20 26,20" fill="#f4c95d"/><polygon points="32,7 35,18 29,18" fill="#fff7e0"/><circle cx="32" cy="13" r="2" fill="#f4c95d"/><path d="M14 50 Q24 56 32 52 Q40 56 50 50" stroke="#7a6048" stroke-width="1.5" fill="none" opacity=".4"/></svg></span>'+
+      '<div style="flex:1;text-align:left"><div style="font-size:13px;color:var(--pri-dk);font-weight:600;margin-bottom:4px">🌟 一二来啦！</div><div style="font-size:12px;color:var(--txt-lt);line-height:1.6">每一针每一线，都是温柔的小心思<br>愿你今天也做出满意的作品 ✨</div></div>'+
+      '<span style="display:inline-block;width:48px;height:48px;flex-shrink:0"><svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><circle cx="32" cy="32" r="6" fill="#a48b72"/><circle cx="32" cy="32" r="2" fill="#f2ebe1"/><g stroke="#a48b72" stroke-width="1.5" stroke-linecap="round"><line x1="32" y1="22" x2="32" y2="18"/><line x1="32" y1="46" x2="32" y2="42"/><line x1="22" y1="32" x2="18" y2="32"/><line x1="46" y1="32" x2="42" y2="32"/><line x1="25" y1="25" x2="22" y2="22"/><line x1="39" y1="39" x2="42" y2="42"/><line x1="25" y1="39" x2="22" y2="42"/><line x1="39" y1="25" x2="42" y2="22"/></g><path d="M52 14 Q56 12 58 16 Q56 18 52 16" stroke="#a48b72" stroke-width="2" fill="none"/></svg></span>'+
+    '</div>';
   // 启动轮播定时器（如果有多张）
   if(carImgs.length>1){
     if(window._carTimer)clearInterval(window._carTimer);
@@ -937,7 +1010,7 @@ function rpl(m){
   gs.proj=gs.proj||'';gd.proj=gd.proj||'';
   function dr(){
     var is=flt(D.projects,gs.proj,gd.proj);
-    m.innerHTML='<div class="page ac"><div class="pg-hd"><h1 class="pg-tt">📋 项目列表</h1><p class="pg-sub">规划记录每一次缝纫制作项目</p></div>'+
+    m.innerHTML='<div class="page ac"><div class="pg-hd"><h1 class="pg-tt">📋 项目列表</h1></div>'+
       '<div class="tb"><input class="fi" id="sProj" placeholder="🔍 搜索项目..." value="'+eh(gs.proj)+'" oninput="gs.proj=this.value;rfoc(\'sProj\');rpl(document.getElementById(\'main\'))"><input class="fi" type="date" id="dProj" value="'+gd.proj+'" onchange="gd.proj=this.value;rpl(document.getElementById(\'main\'))"><button class="btn btn-pri" onclick="opP()">➕ 新建项目</button></div>'+
       (is.length===0?rem('📝','还没有项目，点击上方按钮创建第一个吧'):
       '<div class="cd" style="padding:0;overflow:hidden"><div class="tbl-w"><table><thead><tr><th>作品类型</th><th>作品名称</th><th>面料</th><th>辅料</th><th>状态</th><th>日期</th><th>操作</th></tr></thead><tbody>'+
@@ -1199,6 +1272,7 @@ function opFP(pid){
 
   var fields=[
     {name:'images',lb:'成品图片',type:'image'},
+    {name:'destination',lb:'作品归属',type:'select',op:['自留','赠送'],def:'自留'},
     {name:'size',lb:'成品实际尺寸',ph:'如：20cm × 15cm × 5cm'},
     {name:'completionDate',lb:'制作完成时间',type:'date',def:new Date().toISOString().slice(0,10)},
     {name:'duration',lb:'整体制作时长',ph:'如：3小时'},
@@ -1244,8 +1318,8 @@ function opFP(pid){
 function svFP(pid){
   try{
     var fields=[
-      {name:'images',lb:'图片',type:'image'},{name:'size',lb:'尺寸'},
-      {name:'completionDate',lb:'完成时间'},{name:'duration',lb:'时长'},{name:'notes',lb:'备注',type:'textarea'}
+      {name:'images',lb:'图片',type:'image'},{name:'destination',lb:'作品归属',type:'select'},
+      {name:'size',lb:'尺寸'},{name:'completionDate',lb:'完成时间'},{name:'duration',lb:'时长'},{name:'notes',lb:'备注',type:'textarea'}
     ];
     var vs=gV(fields);
     var ex=pid?D.finishedProducts.filter(function(fp){return fp.projectId===pid})[0]:null;
@@ -1261,6 +1335,7 @@ function svFP(pid){
       ex.accessoryDetails=acs;
       ex.projectCategory=pj?pj.category:(ex.projectCategory||'');
       ex.projectType=pj?pj.type:(ex.projectType||'手工录入');
+      ex.destination=vs.destination||ex.destination||'自留';
     }else{
       D.finishedProducts.push({
         id:gid(),
@@ -1268,6 +1343,7 @@ function svFP(pid){
         projectCategory:pj?pj.category:'',
         projectType:pj?pj.type:'手工录入',
         images:vs.images||[],
+        destination:vs.destination||'自留',
         size:vs.size||'',
         completionDate:vs.completionDate||'',
         duration:vs.duration||'',
@@ -1290,7 +1366,7 @@ function rpds(m){
   var cats=[{id:'all',lb:'全部',em:'🏠'},{id:'包包类',lb:'包包类',em:'👜'},{id:'饰品类',lb:'饰品类',em:'🎀'},{id:'服饰类',lb:'服饰类',em:'👗'}];
   function dr(){
     var is=flt(D.finishedProducts,gs.prod,gd.prod).filter(function(fp){return gs.prodCat==='all'||inferPCat(fp)===gs.prodCat});
-    m.innerHTML='<div class="page ac"><div class="pg-hd"><h1 class="pg-tt">🏆 成品库</h1><p class="pg-sub">所有已完成的作品归档</p></div>'+
+    m.innerHTML='<div class="page ac"><div class="pg-hd"><h1 class="pg-tt">🏆 成品库</h1></div>'+
       '<div class="tb"><input class="fi" id="sProd" placeholder="🔍 搜索成品..." value="'+eh(gs.prod)+'" oninput="gs.prod=this.value;rfoc(\'sProd\');rpds(document.getElementById(\'main\'))"><input class="fi" type="date" id="dProd" value="'+gd.prod+'" onchange="gd.prod=this.value;rpds(document.getElementById(\'main\'))"><button class="btn btn-pri" onclick="opFPNew()">✋ 新建成品</button></div>'+
       '<div class="cat-tbs">'+cats.map(function(c){return '<button class="cat-tb '+(gs.prodCat===c.id?'ac':'')+'" onclick="gs.prodCat=\''+c.id+'\';rpds(document.getElementById(\'main\'))">'+c.em+' '+c.lb+'</button>'}).join('')+'</div>'+
       (is.length===0?rem('📦','该分类下还没有成品，完成项目后会自动归档，也可手动新建成品'):
@@ -1308,7 +1384,26 @@ function rpds(m){
         }
         var pjLabel=fp.projectId?'<span style="font-size:9px;color:var(--txt-ll);margin-top:6px">📋 项目归档</span>':'<span style="font-size:9px;color:var(--txt-ll);margin-top:6px">✋ 手工录入</span>';
         var validImgs=(fp.images||[]).filter(function(img){return isValidDataUrl(img)});
-        var imgHTML=validImgs.length?'<div style="display:flex;gap:6px;margin-bottom:10px;overflow-x:auto;flex-wrap:wrap">'+validImgs.map(function(img){return '<img src="'+img+'" style="width:100px;height:100px;object-fit:cover;border-radius:12px;cursor:pointer" onclick="shLb(this.src)" onerror="this.style.display=\'none\'">'}).join('')+'</div>':'<div style="text-align:center;padding:20px;color:var(--txt-ll)">📷 暂无图片</div>';
+        var imgHTML=validImgs.length?'<div style="display:flex;gap:6px;margin-bottom:10px;overflow-x:auto;flex-wrap:wrap;position:relative">'+validImgs.map(function(img){return '<img src="'+img+'" style="width:100px;height:100px;object-fit:cover;border-radius:12px;cursor:pointer" onclick="shLb(this.src)" onerror="this.style.display=\'none\'">'}).join('')+
+          // 印章：叠在图片右下角
+          (function(){
+            var dest=fp.destination||'自留';
+            var isKeep=dest==='自留';
+            return '<div class="stamp stamp-'+(isKeep?'keep':'gift')+'" style="position:absolute;right:6px;bottom:6px"><div class="stamp-box">'+
+              '<div class="stamp-icon">'+(isKeep?'🏠':'🎁')+'</div>'+
+              '<div class="stamp-tx">'+dest+'</div>'+
+              '</div></div>';
+          })()
+        +'</div>':'<div style="text-align:center;padding:20px;color:var(--txt-ll);position:relative">📷 暂无图片'+
+          (function(){
+            var dest=fp.destination||'自留';
+            var isKeep=dest==='自留';
+            return '<div class="stamp stamp-'+(isKeep?'keep':'gift')+'" style="position:absolute;right:10px;top:10px"><div class="stamp-box">'+
+              '<div class="stamp-icon">'+(isKeep?'🏠':'🎁')+'</div>'+
+              '<div class="stamp-tx">'+dest+'</div>'+
+              '</div></div>';
+          })()
+        +'</div>';
         return '<div class="cd">'+imgHTML+
           '<div class="cd-tt"><span class="em">'+catEm(inferPCat(fp))+'</span>'+eh(fp.projectType||'未知作品')+'</div>'+
           '<div style="font-size:13px;color:var(--txt-lt);line-height:1.8"><div><span class="tag tag-pd">'+eh(inferPCat(fp)||'—')+'</span></div><div>📐 尺寸：'+eh(fp.size||'—')+'</div><div>📅 完成：'+(fp.completionDate||'—')+'</div><div>⏱ 时长：'+eh(fp.duration||'—')+'</div>'+
@@ -1338,6 +1433,7 @@ function opFPNew(eid){
   var fields=[
     {name:'projectCategory',lb:'作品类型',type:'select',op:['包包类','饰品类','服饰类']},
     {name:'projectType',lb:'作品名称',ph:'如：化妆包、零钱包、笔袋、大肠发圈、帆布包...'},
+    {name:'destination',lb:'作品归属',type:'select',op:['自留','赠送'],def:'自留'},
     {name:'images',lb:'成品图片',type:'image'},
     {name:'size',lb:'成品实际尺寸',ph:'如：20cm × 15cm × 5cm'},
     {name:'completionDate',lb:'制作完成时间',type:'date',def:(ex&&ex.completionDate?ex.completionDate:new Date().toISOString().slice(0,10))},
@@ -1387,6 +1483,7 @@ function svFPNew(eid){
   try{
     var fields=[
       {name:'projectCategory',lb:'作品类型',type:'select'},{name:'projectType',lb:'作品名称'},
+      {name:'destination',lb:'作品归属',type:'select'},
       {name:'images',lb:'图片',type:'image'},{name:'size',lb:'尺寸'},
       {name:'completionDate',lb:'完成时间'},{name:'duration',lb:'时长'},{name:'notes',lb:'备注',type:'textarea'}
     ];
@@ -1425,9 +1522,11 @@ function svFPNew(eid){
       Object.assign(ex,vs);
       ex.fabricDetails=fbs;
       ex.accessoryDetails=acs;
+      ex.destination=vs.destination||ex.destination||'自留';
     }else{
       D.finishedProducts.push({
         id:gid(),projectId:'',projectCategory:vs.projectCategory||'',projectType:vs.projectType||'手工录入',
+        destination:vs.destination||'自留',
         images:vs.images||[],size:vs.size||'',
         completionDate:vs.completionDate||'',duration:vs.duration||'',
         fabricDetails:fbs,accessoryDetails:acs,notes:vs.notes||'',
@@ -1465,7 +1564,7 @@ function rf(m){
       return {item:f,consumed:consumed,inventory:inventory};
     });
 
-    m.innerHTML='<div class="page ac"><div class="pg-hd"><h1 class="pg-tt">🧵 布料仓库</h1><p class="pg-sub">三大分区独立归档，耗用自动关联项目</p></div>'+
+    m.innerHTML='<div class="page ac"><div class="pg-hd"><h1 class="pg-tt">🧵 布料仓库</h1></div>'+
       '<div class="cat-tbs">'+cats.map(function(c){return '<button class="cat-tb'+(ac===c?' ac':'')+'" onclick="nv(\'fab\',\''+cids[c]+'\')">'+cics[c]+' '+c+'</button>'}).join('')+'</div>'+
       '<div class="tb"><input class="fi" id="sFab" placeholder="🔍 搜索布料..." value="'+eh(gs.fab)+'" oninput="gs.fab=this.value;rfoc(\'sFab\');rf(document.getElementById(\'main\'))"><input class="fi" type="date" id="dFab" value="'+gd.fab+'" onchange="gd.fab=this.value;rf(document.getElementById(\'main\'))"><button class="btn btn-pri" onclick="opF(\''+ac+'\')">➕ 新增布料</button></div>'+
       (is.length===0?rem('🧶','还没有布料记录'):
@@ -1482,6 +1581,7 @@ function rf(m){
       }).join('')+'</tbody></table></div></div>')+'</div>';
   }
   dr();
+  bindSrch('sFab','fab',function(){rf(document.getElementById('main'))});
 }
 
 function opF(cat,eid){
@@ -1540,7 +1640,7 @@ function ra(m){
       return {item:a,consumed:consumed,inventory:inventory};
     });
 
-    m.innerHTML='<div class="page ac"><div class="pg-hd"><h1 class="pg-tt">🧷 辅料仓库</h1><p class="pg-sub">精细化辅料分类，耗用自动关联项目</p></div>'+
+    m.innerHTML='<div class="page ac"><div class="pg-hd"><h1 class="pg-tt">🧷 辅料仓库</h1></div>'+
       '<div class="cat-tbs">'+cats.map(function(c){return '<button class="cat-tb'+(ac===c?' ac':'')+'" onclick="nv(\'acc\',\''+cids[c]+'\')">'+cics[c]+' '+c+'</button>'}).join('')+'</div>'+
       '<div class="tb"><input class="fi" id="sAcc" placeholder="🔍 搜索辅料..." value="'+eh(gs.acc)+'" oninput="gs.acc=this.value;rfoc(\'sAcc\');ra(document.getElementById(\'main\'))"><input class="fi" type="date" id="dAcc" value="'+gd.acc+'" onchange="gd.acc=this.value;ra(document.getElementById(\'main\'))"><button class="btn btn-pri" onclick="opA(\''+ac+'\')">➕ 新增辅料</button></div>'+
       (is.length===0?rem('🧷','还没有辅料记录'):
@@ -1557,6 +1657,7 @@ function ra(m){
       }).join('')+'</tbody></table></div></div>')+'</div>';
   }
   dr();
+  bindSrch('sAcc','acc',function(){ra(document.getElementById('main'))});
 }
 
 function opA(cat,eid){
@@ -1603,7 +1704,7 @@ function rt(m){
   gs.tool=gs.tool||'';gd.tool=gd.tool||'';
   function dr(){
     var is=flt(D.tools,gs.tool,gd.tool);
-    m.innerHTML='<div class="page ac"><div class="pg-hd"><h1 class="pg-tt">🔧 工具与设备</h1><p class="pg-sub">统一归档所有缝纫设备与手动工具</p></div>'+
+    m.innerHTML='<div class="page ac"><div class="pg-hd"><h1 class="pg-tt">🔧 工具与设备</h1></div>'+
       '<div class="tb"><input class="fi" id="sTool" placeholder="🔍 搜索工具..." value="'+eh(gs.tool)+'" oninput="gs.tool=this.value;rfoc(\'sTool\');rt(document.getElementById(\'main\'))"><input class="fi" type="date" id="dTool" value="'+gd.tool+'" onchange="gd.tool=this.value;rt(document.getElementById(\'main\'))"><button class="btn btn-pri" onclick="opT()">➕ 新增工具</button></div>'+
       (is.length===0?rem('🔧','还没有工具设备记录'):
       '<div class="cd" style="padding:0;overflow:hidden"><div class="tbl-w"><table><thead><tr><th>名称</th><th>型号</th><th>数量</th><th>购入价格</th><th>小计</th><th>备注</th><th>日期</th><th>操作</th></tr></thead><tbody>'+
@@ -1617,6 +1718,7 @@ function rt(m){
       }).join('')+'</tbody></table></div></div>')+'</div>';
   }
   dr();
+  bindSrch('sTool','tool',function(){rt(document.getElementById('main'))});
 }
 
 function opT(eid){
@@ -1660,7 +1762,7 @@ function rpt(m){
   gs.ptn=gs.ptn||'';gd.ptn=gd.ptn||'';
   function dr(){
     var is=flt(D.patterns||[],gs.ptn,gd.ptn);
-    m.innerHTML='<div class="page ac"><div class="pg-hd"><h1 class="pg-tt">📐 图纸库</h1><p class="pg-sub">图纸收藏与归档，支持多图上传</p></div>'+
+    m.innerHTML='<div class="page ac"><div class="pg-hd"><h1 class="pg-tt">📐 图纸库</h1></div>'+
       '<div class="tb"><input class="fi" id="sPtn" placeholder="🔍 搜索图纸..." value="'+eh(gs.ptn)+'" oninput="gs.ptn=this.value;rfoc(\'sPtn\');rpt(document.getElementById(\'main\'))"><input class="fi" type="date" id="dPtn" value="'+gd.ptn+'" onchange="gd.ptn=this.value;rpt(document.getElementById(\'main\'))"><button class="btn btn-pri" onclick="opPT()">➕ 新增图纸</button></div>'+
       (is.length===0?rem('📐','还没有图纸，点击上方按钮上传第一份图纸'):
       '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px">'+
@@ -1681,6 +1783,7 @@ function rpt(m){
       }).join('')+'</div>')+'</div>';
   }
   dr();
+  bindSrch('sPtn','ptn',function(){rpt(document.getElementById('main'))});
 }
 
 function opPT(eid){
@@ -1741,7 +1844,7 @@ function rc(m){
   var toolC=D.tools.reduce(function(s,t){return s+(parseFloat(t.price)||0)*(t.quantity||1)},0);
   var total=fabC+accC+toolC;
 
-  m.innerHTML='<div class="page ac"><div class="pg-hd"><h1 class="pg-tt">💰 成本花费</h1><p class="pg-sub">全自动联动统计，所有数据来自仓库与设备录入</p></div>'+
+  m.innerHTML='<div class="page ac"><div class="pg-hd"><h1 class="pg-tt">💰 成本花费</h1></div>'+
     '<div class="st-cds" style="grid-template-columns:1fr"><div class="st-cd" style="background:linear-gradient(135deg,var(--side-bg),var(--card))"><div class="st-ic">💎</div><div class="st-vl">¥'+total.toFixed(2)+'</div><div class="st-lb">总成本（布料 + 辅料 + 工具设备）</div></div></div>'+
     '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:20px;margin-top:20px">'+
 
