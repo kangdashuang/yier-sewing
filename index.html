@@ -355,17 +355,59 @@ function migrateData(d){
   if(Array.isArray(d.finishedProducts)){d.finishedProducts.forEach(function(fp){if(!fp.projectCategory)fp.projectCategory=inferPCat(fp);})}
 }
 
+// ============ IndexedDB 大容量存储（可存几百 MB 图片） ============
+var _dbP=null;
+function idbOpen(){
+  if(_dbP)return _dbP;
+  _dbP=new Promise(function(res,rej){
+    try{
+      var req=indexedDB.open('yier-sewing',1);
+      req.onupgradeneeded=function(){var db=req.result;if(!db.objectStoreNames.contains('kv'))db.createObjectStore('kv')};
+      req.onsuccess=function(){res(req.result)};
+      req.onerror=function(){rej(req.error)};
+    }catch(e){rej(e)}
+  });
+  return _dbP;
+}
+function idbPut(key,val){
+  return idbOpen().then(function(db){
+    return new Promise(function(res,rej){
+      try{
+        var tx=db.transaction('kv','readwrite');
+        tx.objectStore('kv').put(val,key);
+        tx.oncomplete=function(){res()};
+        tx.onerror=function(){rej(tx.error)};
+      }catch(e){rej(e)}
+    });
+  }).catch(function(){});
+}
+function idbGet(key){
+  return idbOpen().then(function(db){
+    return new Promise(function(res,rej){
+      try{
+        var tx=db.transaction('kv','readonly');
+        var req=tx.objectStore('kv').get(key);
+        req.onsuccess=function(){res(req.result)};
+        req.onerror=function(){rej(req.error)};
+      }catch(e){rej(e)}
+    });
+  }).catch(function(){return null});
+}
+// 统一保存：localStorage（快速启动缓存）+ IndexedDB（大容量主存储）
+function saveLocal(d){
+  var json=JSON.stringify(d);
+  try{localStorage.setItem(SK,json)}catch(e){/* localStorage 满了没关系，IndexedDB 兜底 */}
+  idbPut('main',json);
+  return json;
+}
+
 function svLocal(d){
   try{
-    var json = JSON.stringify(d);
+    var json = saveLocal(d);
     var size = json.length * 2;
-    if(size > 4194304) console.warn('Data size large:', (size/1024/1024).toFixed(2)+'MB - storage almost full');
-    localStorage.setItem(SK, json);
+    if(size > 4194304) console.warn('Data size large:', (size/1024/1024).toFixed(2)+'MB');
     return true;
   }catch(e){
-    if(e.name==='QuotaExceededError' || /quota|exceeded|full/i.test(e.message)){
-      throw new Error('存储空间已满。图片过多或过大，请删除部分图片后再试。');
-    }
     throw e;
   }
 }
@@ -425,16 +467,8 @@ function sv(d){
   try{
     svLocal(d);
   }catch(e){
-    if(/存储空间已满/.test(e.message)){
-      // 空间满时尝试自动瘦身：清理 activities 到 20 条 + 提示
-      if(D.activities&&D.activities.length>20){
-        D.activities=D.activities.slice(0,20);
-        try{svLocal(D);ts('已自动清理最近动态记录，请继续。',3000);return;}catch(_){}
-      }
-      ts('⚠️ 存储已满！请前往「数据管理」导出备份后删除部分图片',5000);
-      throw e;
-    }
-    throw e;
+    console.error('save error', e);
+    ts('⚠️ 保存异常：' + (e.message || '未知错误'), 4000);
   }
   if(_syncTimer) clearTimeout(_syncTimer);
   _syncTimer = setTimeout(function(){ syncCloud(); }, 600);
@@ -471,7 +505,7 @@ function subCloud(){
           var cloudStr = JSON.stringify(cloud);
           var localStr = JSON.stringify(local);
           if(cloudStr !== localStr){
-            localStorage.setItem(SK, cloudStr);
+            saveLocal(cloud);
             D = cloud;
             rp();
             ts('数据已同步');
@@ -484,6 +518,25 @@ function subCloud(){
 
 var D = ld();
 var _initSyncDone = false;
+// 启动时异步读取 IndexedDB（大容量主存储），如有更新数据则覆盖本地
+(function(){
+  idbGet('main').then(function(json){
+    if(json && typeof json === 'string'){
+      try{
+        var idbData = JSON.parse(json);
+        if(isValidData(idbData)){
+          migrateData(idbData);
+          var localStr = JSON.stringify(D);
+          if(localStr !== json){
+            D = idbData;
+            try{localStorage.setItem(SK, json)}catch(_){}
+            rp();
+          }
+        }
+      }catch(e){}
+    }
+  });
+})();
 function isValidData(d){
   return d && typeof d === 'object' && Array.isArray(d.projects) && Array.isArray(d.fabrics) && Array.isArray(d.accessories) && Array.isArray(d.tools) && Array.isArray(d.finishedProducts) && Array.isArray(d.activities) && Array.isArray(d.patterns);
 }
@@ -497,20 +550,20 @@ function isValidData(d){
       var cloudStr = JSON.stringify(cloud);
       var localStr = JSON.stringify(local);
       if(cloudStr !== localStr){
-        localStorage.setItem(SK, cloudStr);
+        saveLocal(cloud);
         D = cloud;
         rp();
       }
     }else if(cloud && Object.keys(cloud).length === 0){
       // 云端是空对象 {}：用本地数据初始化云端
       D = local;
-      localStorage.setItem(SK, JSON.stringify(D));
+      saveLocal(D);
       rp();
       syncCloud(true);
     }else{
       // 云端无数据：保持本地
       D = local;
-      localStorage.setItem(SK, JSON.stringify(D));
+      saveLocal(D);
       rp();
     }
     if(!_syncErr) setSyncStatus('ok');
@@ -742,7 +795,7 @@ function hiU(input,pid){
       if(!isImg(file)){ts('请选择图片文件（支持 jpg/png/gif/webp/heic 等）');return}
       if(file.size&&file.size>20*1024*1024){ts('单张图片不能超过 20MB');return}
       var processImg=function(dataUrl){
-        compressImg(dataUrl,800,0.6,function(data){
+        compressImg(dataUrl,1200,0.8,function(data){
           if(!isValidDataUrl(data)){
             fail++;
             ts('图片处理失败，请重试');
