@@ -635,50 +635,62 @@ function isHeic(file){
   var ext=(file.name||'').split('.').pop().toLowerCase();
   return ext==='heic'||ext==='heif';
 }
+// libheif-bundle.js (WASM bundle) 的 default 是一个 Emscripten 工厂函数
+// 需要先调用它初始化 WASM（首次约 1-3 秒），返回的模块实例才有 HeifDecoder/HeifContext
+var _heifModPromise=null;
+function getHeifMod(){
+  if(_heifModPromise)return _heifModPromise;
+  var heif=(typeof libheif!=='undefined')?(libheif.default||libheif):null;
+  if(!heif){_heifModPromise=Promise.reject(new Error('HEIC解码库未加载'));return _heifModPromise}
+  // 工厂可能返回 Promise 或直接返回模块
+  var r=heif();
+  _heifModPromise=(r&&typeof r.then==='function')?r:Promise.resolve(r);
+  return _heifModPromise;
+}
 function convertHeic(file,callback){
-  // 使用 libheif-js@1.19 将 HEIC 解码到 canvas，再转 JPEG DataURL
-  // libheif-bundle.js 通过 UMD 暴露 libheif.default（含 HeifDecoder/HeifContext）
-  var heifLib=(typeof libheif!=='undefined')?(libheif.default||libheif):null;
-  if(!heifLib){callback(null,'HEIC解码库未加载，请检查网络');return}
-  var r=new FileReader();
-  r.onload=function(e){
-    try{
-      var images=null;
-      if(heifLib.HeifDecoder){
-        // 新 API（libheif-js 1.17+）
-        var decoder=new heifLib.HeifDecoder();
-        images=decoder.decode(new Uint8Array(e.target.result));
-      }else if(heifLib.HeifContext){
-        // 旧 API（libheif-js 1.16 及更早）
-        var ctx=new heifLib.HeifContext();
-        ctx.addImage(new Uint8Array(e.target.result));
-        images=ctx.images;
-      }else{callback(null,'HEIC API未找到');return}
-      if(!images||!images.length){callback(null,'HEIC解析失败：无图像');return}
-      var img=images[0];
-      var width=img.get_width();
-      var height=img.get_height();
-      var canvas=document.createElement('canvas');
-      canvas.width=width;canvas.height=height;
-      var ctx=canvas.getContext('2d');
-      var imageData=ctx.createImageData(width,height);
-      // display 是异步回调
-      img.display(imageData,function(result){
-        if(!result){callback(null,'HEIC显示失败：可能是损坏或不兼容的格式');return}
-        try{
-          ctx.putImageData(imageData,0,0);
-          // 转 JPEG DataURL
-          var jpegDataUrl=canvas.toDataURL('image/jpeg',0.85);
-          callback(jpegDataUrl);
-        }catch(e){callback(null,'JPEG编码失败：'+(e.message||e.toString()))}
-      });
-    }catch(err){
-      console.error('HEIC转换失败',err);
-      callback(null,err&&(err.message||err.toString())||'未知错误');
-    }
-  };
-  r.onerror=function(){callback(null,'文件读取失败')};
-  r.readAsArrayBuffer(file);
+  getHeifMod().then(function(heifMod){
+    var r=new FileReader();
+    r.onload=function(e){
+      try{
+        var images=null;
+        if(heifMod.HeifDecoder){
+          // 新 API（libheif-js 1.17+）
+          var decoder=new heifMod.HeifDecoder();
+          images=decoder.decode(new Uint8Array(e.target.result));
+        }else if(heifMod.HeifContext){
+          // 旧 API（libheif-js 1.16 及更早）
+          var ctx=new heifMod.HeifContext();
+          ctx.addImage(new Uint8Array(e.target.result));
+          images=ctx.images;
+        }else{callback(null,'HEIC API未找到（libheif模块已加载但无解码器）');return}
+        if(!images||!images.length){callback(null,'HEIC解析失败：无图像');return}
+        var img=images[0];
+        var width=img.get_width();
+        var height=img.get_height();
+        var canvas=document.createElement('canvas');
+        canvas.width=width;canvas.height=height;
+        var ctx=canvas.getContext('2d');
+        var imageData=ctx.createImageData(width,height);
+        // display 是异步回调
+        img.display(imageData,function(result){
+          if(!result){callback(null,'HEIC显示失败：可能是损坏或不兼容的格式');return}
+          try{
+            ctx.putImageData(imageData,0,0);
+            // 转 JPEG DataURL
+            var jpegDataUrl=canvas.toDataURL('image/jpeg',0.85);
+            callback(jpegDataUrl);
+          }catch(e){callback(null,'JPEG编码失败：'+(e.message||e.toString()))}
+        });
+      }catch(err){
+        console.error('HEIC转换失败',err);
+        callback(null,err&&(err.message||err.toString())||'未知错误');
+      }
+    };
+    r.onerror=function(){callback(null,'文件读取失败')};
+    r.readAsArrayBuffer(file);
+  }).catch(function(err){
+    callback(null,'HEIC库初始化失败：'+(err&&(err.message||err.toString())||'未知错误'));
+  });
 }
 function hiU(input,pid){
   var fs=input.files;var c=document.getElementById(pid);if(!c)return;
@@ -703,7 +715,8 @@ function hiU(input,pid){
         });
       };
       if(isHeic(file)){
-        // HEIC 文件：先用 heic2any 转为 JPEG DataURL，再压缩
+        // HEIC 文件：先用 libheif 转为 JPEG DataURL，再压缩
+        ts('正在解码 HEIC（首次需 1-3 秒）...',3000);
         convertHeic(file,function(dataUrl,errMsg){
           if(dataUrl&&isValidDataUrl(dataUrl)){processImg(dataUrl)}
           else{
