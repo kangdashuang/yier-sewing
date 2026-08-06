@@ -7,6 +7,8 @@ const ASSETS = [
 ];
 
 self.addEventListener('install', event => {
+  // 立即跳过等待状态，新 SW 安装完立刻激活（不等旧页面关闭）
+  self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS))
   );
@@ -16,7 +18,7 @@ self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(keys =>
       Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
-    )
+    ).then(() => self.clients.claim()) // 立即接管所有已打开的页面
   );
 });
 

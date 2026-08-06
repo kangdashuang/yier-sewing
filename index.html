@@ -1847,7 +1847,29 @@ document.addEventListener('click',function(e){
 // 注册 SW
 if('serviceWorker' in navigator){
   window.addEventListener('load',function(){
-    navigator.serviceWorker.register('sw.js').catch(function(){});
+    navigator.serviceWorker.register('sw.js').then(function(reg){
+      // 新 SW 安装完成后立即激活并接管
+      reg.update();
+      if(reg.waiting){
+        reg.waiting.postMessage({type:'SKIP_WAITING'});
+      }
+      reg.addEventListener('updatefound',function(){
+        var nw=reg.installing;
+        if(!nw)return;
+        nw.addEventListener('statechange',function(){
+          if(nw.state==='installed'&&navigator.serviceWorker.controller){
+            // 新版本已就绪，提示用户刷新
+            ts('新版本已就绪，正在生效...',2000);
+            setTimeout(function(){location.reload()},1500);
+          }
+        });
+      });
+    }).catch(function(){});
+    // 控制器变化时刷新一次（让新 SW 接管）
+    var refreshing=false;
+    navigator.serviceWorker.addEventListener('controllerchange',function(){
+      if(refreshing)return;refreshing=true;location.reload();
+    });
   });
 }
 </script>
