@@ -254,7 +254,7 @@ tr:hover td{background:rgba(164,139,114,.04)}
 .fui{display:none}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/libheif-js@1.19.8/libheif-wasm/libheif-bundle.js"></script>
 </head>
 <body>
 
@@ -636,24 +636,33 @@ function isHeic(file){
   return ext==='heic'||ext==='heif';
 }
 function convertHeic(file,callback){
-  // 使用 heic2any 将 HEIC 转为 JPEG
-  if(typeof heic2any==='undefined'){callback(null,'HEIC解码库未加载，请检查网络');return}
+  // 使用 libheif-js@1.19 将 HEIC 解码到 canvas，再转 JPEG DataURL
+  if(typeof libheif==='undefined'){callback(null,'HEIC解码库未加载，请检查网络');return}
   var r=new FileReader();
   r.onload=function(e){
     try{
-      heic2any({blob:new Blob([e.target.result]),toType:'image/jpeg',quality:0.8})
-        .then(function(jpegBlob){
-          var fr=new FileReader();
-          fr.onload=function(ev){callback(ev.target.result)};
-          fr.onerror=function(){callback(null,'读取JPEG失败')};
-          fr.readAsDataURL(jpegBlob);
-        })
-        .catch(function(err){
-          console.error('HEIC转换失败',err);
-          callback(null,err&&(err.message||err.toString())||'未知错误');
-        });
+      var decoder=new libheif.HeifDecoder();
+      var images=decoder.decode(new Uint8Array(e.target.result));
+      if(!images||!images.length){callback(null,'HEIC解析失败：无图像');return}
+      var img=images[0];
+      var width=img.get_width();
+      var height=img.get_height();
+      var canvas=document.createElement('canvas');
+      canvas.width=width;canvas.height=height;
+      var ctx=canvas.getContext('2d');
+      var imageData=ctx.createImageData(width,height);
+      // display 是异步回调
+      img.display(imageData,function(result){
+        if(!result){callback(null,'HEIC显示失败：可能是损坏或不兼容的格式');return}
+        try{
+          ctx.putImageData(imageData,0,0);
+          // 转 JPEG DataURL
+          var jpegDataUrl=canvas.toDataURL('image/jpeg',0.85);
+          callback(jpegDataUrl);
+        }catch(e){callback(null,'JPEG编码失败：'+(e.message||e.toString()))}
+      });
     }catch(err){
-      console.error('HEIC转换异常',err);
+      console.error('HEIC转换失败',err);
       callback(null,err&&(err.message||err.toString())||'未知错误');
     }
   };
