@@ -38,7 +38,7 @@ input,select,textarea{font-family:inherit;font-size:inherit}
 /* ===== 侧边栏 ===== */
 .side{position:fixed;top:0;left:0;width:var(--nw);height:100vh;height:100dvh;background:var(--side-bg);border-right:1px solid var(--bd);z-index:100;display:flex;flex-direction:column;transition:transform var(--t),width var(--t);overflow:hidden;box-shadow:2px 0 24px rgba(122,96,72,.04)}
 .side-hd{padding:18px 16px;border-bottom:1px solid var(--bd-lt);display:flex;align-items:center;gap:10px;min-height:56px;flex-shrink:0}
-.side-logo{font-size:22px;flex-shrink:0;width:42px;height:42px;display:inline-flex;align-items:center;justify-content:center;border-radius:14px;background:linear-gradient(135deg,var(--pri-lt),var(--pri-dk));box-shadow:0 3px 8px rgba(122,96,72,.2)}
+.side-logo{font-size:24px;flex-shrink:0}
 .side-tt{font-weight:700;font-size:16px;color:var(--pri-dk);white-space:nowrap;overflow:hidden;letter-spacing:.03em}
 .side-nav{flex:1;overflow-y:auto;padding:10px 8px;display:flex;flex-direction:column;gap:4px;-webkit-overflow-scrolling:touch;margin-bottom:auto}
 .side-nav::after{content:'';flex-shrink:0;height:8px}
@@ -71,12 +71,12 @@ input,select,textarea{font-family:inherit;font-size:inherit}
 .page.ac{display:block}
 @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 
-/* ===== 标题（沉浸式渐变横幅） ===== */
-.pg-hd{margin-bottom:24px;background:linear-gradient(135deg,var(--pri-lt),var(--pri-dk));border-radius:var(--r-xl);padding:22px 24px;box-shadow:var(--sh-lg);position:relative;overflow:hidden}
-.pg-hd::before{content:'';position:absolute;top:-40px;right:-30px;width:130px;height:130px;border-radius:50%;background:rgba(255,255,255,.12)}
-.pg-hd::after{content:'🧵';position:absolute;right:26px;top:50%;transform:translateY(-50%);font-size:38px;opacity:.35}
-.pg-tt{font-weight:700;font-size:22px;color:#fff;margin-bottom:2px;letter-spacing:.02em;position:relative}
-.pg-sub{font-size:13px;color:rgba(255,255,255,.92);font-weight:350;position:relative}
+/* ===== 标题（白卡+圆形图标） ===== */
+.pg-hd{margin-bottom:18px;background:#fff;border-radius:var(--r-lg);padding:14px 18px;box-shadow:var(--sh-sm);border:1px solid #e3d8c8;display:flex;align-items:center;gap:12px}
+.pg-ic{width:36px;height:36px;border-radius:50%;background:#f2ebe1;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.pg-tt{font-weight:500;font-size:16px;color:var(--pri-dk);letter-spacing:.02em;margin:0}
+.pg-sub{font-size:13px;color:var(--txt-lt);font-weight:350}
+.pg-quote{margin:-12px 0 18px;padding:10px 16px;border-left:3px solid var(--pri-dk);background:linear-gradient(90deg,var(--side-bg),transparent);border-radius:0 10px 10px 0;font-size:13px;color:var(--txt);font-style:italic;line-height:1.6}
 
 /* ===== 卡片 ===== */
 .cd{background:linear-gradient(180deg,var(--card),var(--card-hover));border-radius:var(--r-lg);padding:20px 22px;box-shadow:var(--sh);border:1px solid var(--bd-lt);transition:all var(--t)}
@@ -84,15 +84,10 @@ input,select,textarea{font-family:inherit;font-size:inherit}
 .cd-tt{font-weight:700;font-size:15px;color:var(--txt);margin-bottom:12px;display:flex;align-items:center;gap:8px}
 .cd-tt .em{font-size:20px}
 
-/* 统计卡片 */
+/* 统计卡（淡色斜切渐变，无色条） */
 .st-cds{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;margin-bottom:24px}
-.st-cd{background:var(--card);border-radius:var(--r-xl);padding:22px 20px;box-shadow:var(--sh);border:1px solid var(--bd-lt);text-align:center;transition:all var(--t);cursor:pointer;position:relative;overflow:hidden}
-.st-cd::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,var(--pri-lt),var(--pri))}
+.st-cd{background:linear-gradient(135deg,var(--card),#f2ebe1);border-radius:var(--r-xl);padding:22px 20px;box-shadow:var(--sh);border:1px solid var(--bd-lt);text-align:center;transition:all var(--t);cursor:pointer}
 .st-cd:hover{transform:translateY(-3px);box-shadow:var(--sh-lg)}
-.st-cd:nth-child(1){background:linear-gradient(160deg,var(--card),#f2ebe1)}
-.st-cd:nth-child(2){background:linear-gradient(160deg,var(--card),#ede3d6)}
-.st-cd:nth-child(3){background:linear-gradient(160deg,var(--card),#e8ded0)}
-.st-cd:nth-child(4){background:linear-gradient(160deg,var(--card),#e3d8c8)}
 .st-ic{font-size:32px;margin-bottom:6px}
 .st-vl{font-weight:700;font-size:28px;color:var(--pri-dk)}
 .st-lb{font-size:13px;color:var(--txt-lt);margin-top:4px;font-weight:350}
@@ -110,11 +105,11 @@ input,select,textarea{font-family:inherit;font-size:inherit}
 .btn-gn:hover{background:var(--green-lt);color:#fff}
 .btn-ic{width:34px;height:34px;padding:0;border-radius:50%;display:inline-flex;align-items:center;justify-content:center}
 
-/* 状态徽章 */
-.st-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 12px;border-radius:20px;font-size:11px;font-weight:500}
-.st-badge.s0{background:#e8ded0;color:#7a6048}
-.st-badge.s1{background:linear-gradient(135deg,#d4b0ad,#b2807d);color:#fff}
-.st-badge.s2{background:linear-gradient(135deg,#b7c6b3,#8ea38a);color:#fff}
+/* 状态徽章（浅底深字莫兰迪） */
+.st-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:500;border:1px solid transparent}
+.st-badge.s0{background:#f2ebe1;color:#7a6048;border-color:#e3d8c8}
+.st-badge.s1{background:#e8e3d4;color:#8a6f4a;border-color:#dbcfbc}
+.st-badge.s2{background:#ddeee5;color:#5a7a68;border-color:#c5d8c8}
 
 /* 全局搜索 */
 .gsearch{margin-bottom:20px;position:relative}
@@ -147,11 +142,11 @@ input,select,textarea{font-family:inherit;font-size:inherit}
 .prod-nm{font-weight:600;font-size:13px;color:var(--txt);margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .prod-dt{font-size:11px;color:var(--txt-ll)}
 
-/* 问候横幅 */
-.greet{display:flex;align-items:center;gap:14px;margin-bottom:20px;padding:16px 20px;border-radius:var(--r-lg);background:linear-gradient(135deg,var(--card),var(--side-bg));border:1px solid var(--bd-lt);box-shadow:var(--sh)}
-.greet-ic{font-size:34px;flex-shrink:0}
-.greet-tx b{font-size:15px;color:var(--pri-dk)}
-.greet-tx p{font-size:12px;color:var(--txt-lt);margin-top:2px}
+/* 问候横幅（极简小条） */
+.greet{display:flex;align-items:center;gap:10px;margin-bottom:18px;padding:10px 14px;border-radius:10px;background:linear-gradient(90deg,#f5efe8,transparent);border-left:3px solid var(--pri)}
+.greet-ic{font-size:18px;flex-shrink:0}
+.greet-tx b{font-size:13px;color:var(--pri-dk);font-weight:600;margin-right:4px}
+.greet-tx{font-size:12px;color:var(--txt-lt)}
 
 /* 双列布局 */
 .dash-two{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}
@@ -1127,14 +1122,11 @@ function rd(m){
   // 个性化问候（按时间段）
   var hr=new Date().getHours();
   var greetTxt,greetEm;
-  if(hr<5){greetEm='🌙';greetTxt='夜深了，一二'}else if(hr<11){greetEm='🌅';greetTxt='早上好，一二'}else if(hr<14){greetEm='☀️';greetTxt='中午好，一二'}else if(hr<18){greetEm='🍵';greetTxt='下午好，一二'}else{greetEm='🌆';greetTxt='晚上好，一二'}
-  var greetSub='今天想做点什么？缝纫的快乐，就在一针一线里 ✨';
+  if(hr<5){greetEm='🌙';greetTxt='夜深了'}else if(hr<11){greetEm='🌅';greetTxt='早上好'}else if(hr<14){greetEm='☀️';greetTxt='中午好'}else if(hr<18){greetEm='🍵';greetTxt='下午好'}else{greetEm='🌆';greetTxt='晚上好'}
 
-  m.innerHTML='<div class="page ac"><div class="pg-hd"><h1 class="pg-tt">📊 总览工作台</h1></div>'+
-    // 个性化问候横幅
-    '<div class="greet"><div class="greet-ic">'+greetEm+'</div><div class="greet-tx"><b>'+greetTxt+' 🪡</b><p>'+greetSub+'</p></div><div style="margin-left:auto;font-size:22px">🧵</div></div>'+
-    // 全局搜索框
-    '<div class="gsearch"><input id="gSearch" placeholder="搜索布料 / 辅料 / 成品 / 项目 / 工具 / 图纸..." oninput="if(window._imeActive)return;gSearch(this.value)"><div id="gResBox"></div></div>'+
+  m.innerHTML='<div class="page ac"><div class="pg-hd"><div class="pg-ic">📊</div><div><h1 class="pg-tt">总览工作台</h1></div></div>'+
+    // 极简问候小条
+    '<div class="greet"><div class="greet-ic">'+greetEm+'</div><div class="greet-tx"><b>'+greetTxt+'，一二</b>今天想做点什么？</div></div>'+
     carHTML+
     '<div class="st-cds">'+
     '<div class="st-cd" onclick="nv(\'proj\',\'proj-list\')"><div class="st-ic">📌</div><div class="st-vl">'+pc+'</div><div class="st-lb">待办任务数</div>'+stTypeH(sP.bag,sP.jewelry,sP.cloth)+'</div>'+
@@ -1170,7 +1162,7 @@ function rpl(m){
   gs.proj=gs.proj||'';gd.proj=gd.proj||'';
   function dr(){
     var is=flt(D.projects,gs.proj,gd.proj);
-    m.innerHTML='<div class="page ac"><div class="pg-hd"><h1 class="pg-tt">📋 项目列表</h1></div>'+
+    m.innerHTML='<div class="page ac"><div class="pg-hd"><div class="pg-ic">📋</div><div><h1 class="pg-tt">项目列表</h1></div></div><div class="pg-quote">'+eh(_maoQuotes[Math.floor(Math.random()*_maoQuotes.length)])+'</div>'+
       '<div class="tb"><input class="fi" id="sProj" placeholder="🔍 搜索项目..." value="'+eh(gs.proj)+'" oninput="if(window._imeActive)return;gs.proj=this.value;rfoc(\'sProj\');rpl(document.getElementById(\'main\'))"><input class="fi" type="date" id="dProj" value="'+gd.proj+'" onchange="gd.proj=this.value;rpl(document.getElementById(\'main\'))"><button class="btn btn-pri" onclick="opP()">➕ 新建项目</button></div>'+
       (is.length===0?rem('📝','还没有项目，点击上方按钮创建第一个吧'):
       '<div class="cd" style="padding:0;overflow:hidden"><div class="tbl-w"><table><thead><tr><th>作品类型</th><th>作品名称</th><th>面料</th><th>辅料</th><th>状态</th><th>日期</th><th>操作</th></tr></thead><tbody>'+
@@ -1526,27 +1518,37 @@ function rpds(m){
   var cats=[{id:'all',lb:'全部',em:'🏠'},{id:'包包类',lb:'包包类',em:'👜'},{id:'饰品类',lb:'饰品类',em:'🎀'},{id:'服饰类',lb:'服饰类',em:'👗'}];
   function dr(){
     var is=flt(D.finishedProducts,gs.prod,gd.prod).filter(function(fp){return gs.prodCat==='all'||inferPCat(fp)===gs.prodCat});
-    m.innerHTML='<div class="page ac"><div class="pg-hd"><h1 class="pg-tt">🏆 成品库</h1></div>'+
+    m.innerHTML='<div class="page ac"><div class="pg-hd"><div class="pg-ic">🏆</div><div><h1 class="pg-tt">成品库</h1></div></div><div class="pg-quote">'+eh(_maoQuotes[Math.floor(Math.random()*_maoQuotes.length)])+'</div>'+
       '<div class="tb"><input class="fi" id="sProd" placeholder="🔍 搜索成品..." value="'+eh(gs.prod)+'" oninput="if(window._imeActive)return;gs.prod=this.value;rfoc(\'sProd\');rpds(document.getElementById(\'main\'))"><input class="fi" type="date" id="dProd" value="'+gd.prod+'" onchange="gd.prod=this.value;rpds(document.getElementById(\'main\'))"><button class="btn btn-pri" onclick="opFPNew()">✋ 新建成品</button></div>'+
       '<div class="cat-tbs">'+cats.map(function(c){return '<button class="cat-tb '+(gs.prodCat===c.id?'ac':'')+'" onclick="gs.prodCat=\''+c.id+'\';rpds(document.getElementById(\'main\'))">'+c.em+' '+c.lb+'</button>'}).join('')+'</div>'+
       (is.length===0?rem('📦','该分类下还没有成品，完成项目后会自动归档，也可手动新建成品'):
-      '<div class="prod-grid">'+
+      '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px">'+
       is.map(function(fp){
         var dest=fp.destination||'自留';
         var isKeep=dest==='自留';
         var validImgs=(fp.images||[]).filter(function(img){return isValidDataUrl(img)});
-        var imgHTML=validImgs.length?
-          '<img src="'+validImgs[0]+'" class="prod-img" onclick="edFP(\''+fp.id+'\')" onerror="this.style.display=\'none\'">':
-          '<div class="prod-emp">'+catEm(inferPCat(fp))+'</div>';
-        return '<div class="prod-card" onclick="edFP(\''+fp.id+'\')">'+
-          '<div style="position:relative">'+imgHTML+
-          '<div class="stamp stamp-'+(isKeep?'keep':'gift')+'" style="position:absolute;right:6px;top:6px"><div class="stamp-box" style="width:44px;height:44px"><div class="stamp-icon" style="font-size:15px">'+(isKeep?'💖':'🎁')+'</div><div class="stamp-tx" style="font-size:9px">'+dest+'</div></div></div>'+
-          '</div>'+
-          '<div class="prod-tx"><div class="prod-nm">'+eh(fp.projectType||'未知作品')+'</div>'+
-          '<div style="display:flex;align-items:center;gap:6px;margin-top:3px"><span class="tag tag-pd" style="font-size:10px;padding:2px 8px">'+eh(inferPCat(fp)||'—')+'</span><span class="prod-dt">'+(fp.completionDate?fp.completionDate.slice(0,10):'')+'</span></div>'+
-          '<div style="margin-top:6px;display:flex;gap:4px"><button class="btn btn-sm" style="flex:1;justify-content:center;padding:4px 8px;font-size:11px" onclick="event.stopPropagation();edFP(\''+fp.id+'\')">✏️ 编辑</button>'+
-          '<button class="btn btn-sm btn-dg" style="flex:1;justify-content:center;padding:4px 8px;font-size:11px" onclick="event.stopPropagation();dlFP(\''+fp.id+'\')">🗑️</button></div>'+
-          '</div></div>'
+        // 多图横滚：所有图片都展示，溢出可滑动
+        var imgGallery=validImgs.length?
+          '<div style="display:flex;gap:6px;padding:6px;overflow-x:auto;background:var(--side-bg);flex-shrink:0" onclick="event.stopPropagation()">'+
+            validImgs.map(function(img){return '<img src="'+img+'" style="width:120px;height:120px;object-fit:cover;border-radius:10px;flex-shrink:0;cursor:pointer" onclick="shLb(this.src)">'}).join('')+
+          '</div>':
+          '<div style="height:80px;background:linear-gradient(135deg,var(--side-bg),var(--bd-lt));display:flex;align-items:center;justify-content:center;color:var(--txt-ll);font-size:13px;flex-shrink:0">暂无图片</div>';
+        // 面辅料摘要
+        var fbChips='';
+        if(fp.fabricDetails&&fp.fabricDetails.length)fbChips+=fp.fabricDetails.slice(0,3).map(function(fd){return '<span style="background:var(--side-bg);padding:2px 8px;border-radius:8px;font-size:11px">🧵 '+eh(fd.fabricName||'')+(fd.size?' · '+eh(fd.size):'')+'</span>'}).join('');
+        if(fp.accessoryDetails&&fp.accessoryDetails.length)fbChips+=fp.accessoryDetails.slice(0,2).map(function(ad){return '<span style="background:var(--side-bg);padding:2px 8px;border-radius:8px;font-size:11px">🧷 '+eh(ad.accessoryName||'')+(ad.quantity?' ×'+eh(ad.quantity):'')+'</span>'}).join('');
+        return '<div class="cd" style="padding:0;overflow:hidden;display:flex;flex-direction:column">'+
+          imgGallery+
+          '<div style="padding:14px;flex:1">'+
+            '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><span class="cat-tb ac" style="font-size:11px;padding:3px 10px;cursor:default">'+catEm(inferPCat(fp))+' '+eh(inferPCat(fp)||'—')+'</span>'+
+              '<span style="font-weight:600;font-size:15px;color:var(--pri-dk);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+eh(fp.projectType||'未命名作品')+'</span>'+
+              '<span class="stamp stamp-'+(isKeep?'keep':'gift')+'" style="position:relative;right:auto;top:auto"><div class="stamp-box" style="width:42px;height:42px"><div class="stamp-icon" style="font-size:14px">'+(isKeep?'💖':'🎁')+'</div><div class="stamp-tx" style="font-size:9px">'+dest+'</div></div></span>'+
+            '</div>'+
+            '<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:11px;color:var(--txt-lt);margin-bottom:8px"><div>📐 '+eh(fp.size||'—')+'</div><div>📅 '+eh(fp.completionDate||'—')+'</div><div>⏱ '+eh(fp.duration||'—')+'</div><div>📋 '+(fp.projectId?'项目归档':'手工录入')+'</div></div>'+
+            (fbChips?'<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px">'+fbChips+'</div>':'')+
+            (fp.notes?'<div style="margin-top:8px;padding:8px 12px;background:var(--side-bg);border-radius:10px;font-size:11px;color:var(--txt)">💬 '+eh(fp.notes).slice(0,100)+(fp.notes.length>100?'…':'')+'</div>':'')+
+            '<div style="margin-top:10px;display:flex;gap:6px"><button class="btn btn-sm" style="flex:1;justify-content:center" onclick="edFP(\''+fp.id+'\')">✏️ 编辑</button><button class="btn btn-sm btn-dg" style="flex:1;justify-content:center" onclick="dlFP(\''+fp.id+'\')">🗑️ 删除</button></div>'+
+          '</div></div>';
       }).join('')+'</div>')+'</div>';
   }
   dr();
@@ -1701,7 +1703,7 @@ function rf(m){
       return {item:f,consumed:consumed,inventory:inventory};
     });
 
-    m.innerHTML='<div class="page ac"><div class="pg-hd"><h1 class="pg-tt">🧵 布料库</h1></div>'+
+    m.innerHTML='<div class="page ac"><div class="pg-hd"><div class="pg-ic">🧵</div><div><h1 class="pg-tt">布料库</h1></div></div><div class="pg-quote">'+eh(_maoQuotes[Math.floor(Math.random()*_maoQuotes.length)])+'</div>'+
       '<div class="cat-tbs">'+cats.map(function(c){return '<button class="cat-tb'+(ac===c?' ac':'')+'" onclick="nv(\'fab\',\''+cids[c]+'\')">'+cics[c]+' '+c+'</button>'}).join('')+'</div>'+
       '<div class="tb"><input class="fi" id="sFab" placeholder="🔍 搜索布料..." value="'+eh(gs.fab)+'" oninput="if(window._imeActive)return;gs.fab=this.value;rfoc(\'sFab\');rf(document.getElementById(\'main\'))"><input class="fi" type="date" id="dFab" value="'+gd.fab+'" onchange="gd.fab=this.value;rf(document.getElementById(\'main\'))"><button class="btn btn-pri" onclick="opF(\''+ac+'\')">➕ 新增布料</button></div>'+
       (is.length===0?rem('🧶','还没有布料记录'):
@@ -1779,7 +1781,7 @@ function ra(m){
       return {item:a,consumed:consumed,inventory:inventory};
     });
 
-    m.innerHTML='<div class="page ac"><div class="pg-hd"><h1 class="pg-tt">🧷 辅料库</h1></div>'+
+    m.innerHTML='<div class="page ac"><div class="pg-hd"><div class="pg-ic">🧷</div><div><h1 class="pg-tt">辅料库</h1></div></div><div class="pg-quote">'+eh(_maoQuotes[Math.floor(Math.random()*_maoQuotes.length)])+'</div>'+
       '<div class="cat-tbs">'+cats.map(function(c){return '<button class="cat-tb'+(ac===c?' ac':'')+'" onclick="nv(\'acc\',\''+cids[c]+'\')">'+cics[c]+' '+c+'</button>'}).join('')+'</div>'+
       '<div class="tb"><input class="fi" id="sAcc" placeholder="🔍 搜索辅料..." value="'+eh(gs.acc)+'" oninput="if(window._imeActive)return;gs.acc=this.value;rfoc(\'sAcc\');ra(document.getElementById(\'main\'))"><input class="fi" type="date" id="dAcc" value="'+gd.acc+'" onchange="gd.acc=this.value;ra(document.getElementById(\'main\'))"><button class="btn btn-pri" onclick="opA(\''+ac+'\')">➕ 新增辅料</button></div>'+
       (is.length===0?rem('🧷','还没有辅料记录'):
@@ -1845,7 +1847,7 @@ function rt(m){
   gs.tool=gs.tool||'';gd.tool=gd.tool||'';
   function dr(){
     var is=flt(D.tools,gs.tool,gd.tool);
-    m.innerHTML='<div class="page ac"><div class="pg-hd"><h1 class="pg-tt">🔧 工具与设备</h1></div>'+
+    m.innerHTML='<div class="page ac"><div class="pg-hd"><div class="pg-ic">🔧</div><div><h1 class="pg-tt">工具与设备</h1></div></div><div class="pg-quote">'+eh(_maoQuotes[Math.floor(Math.random()*_maoQuotes.length)])+'</div>'+
       '<div class="tb"><input class="fi" id="sTool" placeholder="🔍 搜索工具..." value="'+eh(gs.tool)+'" oninput="if(window._imeActive)return;gs.tool=this.value;rfoc(\'sTool\');rt(document.getElementById(\'main\'))"><input class="fi" type="date" id="dTool" value="'+gd.tool+'" onchange="gd.tool=this.value;rt(document.getElementById(\'main\'))"><button class="btn btn-pri" onclick="opT()">➕ 新增工具</button></div>'+
       (is.length===0?rem('🔧','还没有工具设备记录'):
       '<div class="cd" style="padding:0;overflow:hidden"><div class="tbl-w"><table><thead><tr><th>名称</th><th>型号</th><th>数量</th><th>购入价格</th><th>小计</th><th>备注</th><th>日期</th><th>操作</th></tr></thead><tbody>'+
@@ -1903,24 +1905,21 @@ function rpt(m){
   gs.ptn=gs.ptn||'';gd.ptn=gd.ptn||'';
   function dr(){
     var is=flt(D.patterns||[],gs.ptn,gd.ptn);
-    m.innerHTML='<div class="page ac"><div class="pg-hd"><h1 class="pg-tt">📐 图纸库</h1></div>'+
+    m.innerHTML='<div class="page ac"><div class="pg-hd"><div class="pg-ic">📐</div><div><h1 class="pg-tt">图纸库</h1></div></div><div class="pg-quote">'+eh(_maoQuotes[Math.floor(Math.random()*_maoQuotes.length)])+'</div>'+
       '<div class="tb"><input class="fi" id="sPtn" placeholder="🔍 搜索图纸..." value="'+eh(gs.ptn)+'" oninput="if(window._imeActive)return;gs.ptn=this.value;rfoc(\'sPtn\');rpt(document.getElementById(\'main\'))"><input class="fi" type="date" id="dPtn" value="'+gd.ptn+'" onchange="gd.ptn=this.value;rpt(document.getElementById(\'main\'))"><button class="btn btn-pri" onclick="opPT()">➕ 新增图纸</button></div>'+
-      (is.length===0?rem('📐','还没有图纸，点击上方按钮上传第一份图纸'):
-      '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px">'+
+      (is.length===0?rem('📐','还没有图纸，点击上方按钮上传第一份'):
+      '<div style="background:#fff;border-radius:var(--r-lg);border:1px solid var(--bd-lt);box-shadow:var(--sh-sm);overflow:hidden">'+
       is.map(function(p){
-        var imgsHTML='';
-        if(p.images&&p.images.length){
-          imgsHTML='<div style="display:flex;gap:6px;margin-bottom:10px;overflow-x:auto;flex-wrap:wrap">'+p.images.slice(0,4).map(function(img){return '<img src="'+img+'" style="width:90px;height:90px;object-fit:cover;border-radius:12px;cursor:pointer" onclick="shLb(this.src)">'}).join('')+(p.images.length>4?'<div style="width:90px;height:90px;display:flex;align-items:center;justify-content:center;background:var(--side-bg);border-radius:12px;font-size:13px;color:var(--txt-lt)">+'+ (p.images.length-4) +'</div>':'')+'</div>';
-        }else{imgsHTML='<div style="text-align:center;padding:20px;color:var(--txt-ll)">📷 暂无图片</div>'}
-        return '<div class="cd">'+
-          imgsHTML+
-          '<div class="cd-tt"><span class="em">📐</span>'+eh(p.name||'未命名图纸')+'</div>'+
-          '<div style="font-size:13px;color:var(--txt-lt);line-height:1.8">'+
-            '<div>💰 价格：<span class="amt">¥'+(parseFloat(p.price)||0).toFixed(2)+'</span></div>'+
-            '<div style="max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+eh(p.purchaseSource||'')+'">🛒 购买途径：'+eh(p.purchaseSource||'—')+'</div>'+
-            (p.notes?'<div style="margin-top:8px;padding:8px 12px;background:var(--side-bg);border-radius:10px;font-size:12px">💬 '+eh(p.notes)+'</div>':'')+
+        var cover=(p.images&&p.images.length)?'<img src="'+p.images[0]+'" style="width:42px;height:42px;object-fit:cover;border-radius:10px;cursor:pointer;flex-shrink:0" onclick="shLb(this.src)">':'<div style="width:42px;height:42px;border-radius:10px;background:linear-gradient(135deg,#e8ded0,#c4b5a2);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">📐</div>';
+        return '<div style="display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid var(--bd-lt)"><div onclick="opPT(\''+p.id+'\')" style="flex-shrink:0;cursor:pointer">'+cover+'</div>'+
+          '<div style="flex:1;min-width:0;cursor:pointer" onclick="opPT(\''+p.id+'\')">'+
+            '<div style="font-weight:600;font-size:14px;color:#7a6048;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+eh(p.name||'未命名')+'</div>'+
+            '<div style="font-size:11px;color:var(--txt-ll);margin-top:3px;display:flex;gap:10px;flex-wrap:wrap"><span>💰 ¥'+(parseFloat(p.price)||0).toFixed(2)+'</span>'+(p.purchaseSource?'<span>🛒 '+eh(p.purchaseSource)+'</span>':'')+(p.images&&p.images.length>1?'<span>📷 '+p.images.length+'张</span>':'')+(p.notes?'<span title="'+eh(p.notes)+'">💬 '+eh(p.notes).slice(0,20)+(p.notes.length>20?'…':'')+'</span>':'')+'</div>'+
           '</div>'+
-          '<div style="margin-top:10px;display:flex;gap:6px"><button class="btn btn-sm" onclick="opPT(\''+p.id+'\')">✏️ 编辑</button><button class="btn btn-sm btn-dg" onclick="dlPT(\''+p.id+'\')">🗑️ 删除</button></div></div>';
+          '<div style="display:flex;gap:6px;flex-shrink:0">'+
+            '<button class="btn btn-sm" onclick="opPT(\''+p.id+'\')" style="padding:5px 10px">✏️</button>'+
+            '<button class="btn btn-sm btn-dg" onclick="dlPT(\''+p.id+'\')" style="padding:5px 10px">🗑</button>'+
+          '</div></div>';
       }).join('')+'</div>')+'</div>';
   }
   dr();
@@ -1987,10 +1986,9 @@ function rc(m){
   var patternC=(D.patterns||[]).reduce(function(s,p){return s+(parseFloat(p.price)||0)},0);
   var total=fabC+accC+toolC+patternC;
 
-  m.innerHTML='<div class="page ac"><div class="pg-hd"><h1 class="pg-tt">💰 成本明细</h1></div>'+
-    '<div class="st-cds" style="grid-template-columns:1fr"><div class="st-cd"><div class="st-ic">💎</div><div class="st-vl">¥'+total.toFixed(2)+'</div><div class="st-lb">总成本（布料 + 辅料 + 工具设备 + 图纸）</div></div></div>'+
+  m.innerHTML='<div class="page ac"><div class="pg-hd"><div class="pg-ic">💰</div><div><h1 class="pg-tt">成本明细</h1></div></div><div class="pg-quote">'+eh(_maoQuotes[Math.floor(Math.random()*_maoQuotes.length)])+'</div>'+
     // 成本占比环形图
-    '<div class="cd" style="margin-top:20px"><div class="cd-tt"><span class="em">📊</span>成本占比</div>'+
+    '<div class="cd"><div class="cd-tt"><span class="em">📊</span>成本占比</div>'+
     (function(){
       var segs=[{n:'布料',v:fabC,c:'#7a6048'},{n:'辅料',v:accC,c:'#a48b72'},{n:'工具',v:toolC,c:'#c4b5a2'},{n:'图纸',v:patternC,c:'#e3d8c8'}];
       var sum=fabC+accC+toolC+patternC;
