@@ -1134,7 +1134,7 @@ function rd(m){
     // 个性化问候横幅
     '<div class="greet"><div class="greet-ic">'+greetEm+'</div><div class="greet-tx"><b>'+greetTxt+' 🪡</b><p>'+greetSub+'</p></div><div style="margin-left:auto;font-size:22px">🧵</div></div>'+
     // 全局搜索框
-    '<div class="gsearch"><input id="gSearch" placeholder="搜索布料 / 辅料 / 成品 / 项目 / 工具 / 图纸..." oninput="gSearch(this.value)"><div id="gResBox"></div></div>'+
+    '<div class="gsearch"><input id="gSearch" placeholder="搜索布料 / 辅料 / 成品 / 项目 / 工具 / 图纸..." oninput="if(window._imeActive)return;gSearch(this.value)"><div id="gResBox"></div></div>'+
     carHTML+
     '<div class="st-cds">'+
     '<div class="st-cd" onclick="nv(\'proj\',\'proj-list\')"><div class="st-ic">📌</div><div class="st-vl">'+pc+'</div><div class="st-lb">待办任务数</div>'+stTypeH(sP.bag,sP.jewelry,sP.cloth)+'</div>'+
@@ -1171,7 +1171,7 @@ function rpl(m){
   function dr(){
     var is=flt(D.projects,gs.proj,gd.proj);
     m.innerHTML='<div class="page ac"><div class="pg-hd"><h1 class="pg-tt">📋 项目列表</h1></div>'+
-      '<div class="tb"><input class="fi" id="sProj" placeholder="🔍 搜索项目..." value="'+eh(gs.proj)+'" oninput="gs.proj=this.value;rfoc(\'sProj\');rpl(document.getElementById(\'main\'))"><input class="fi" type="date" id="dProj" value="'+gd.proj+'" onchange="gd.proj=this.value;rpl(document.getElementById(\'main\'))"><button class="btn btn-pri" onclick="opP()">➕ 新建项目</button></div>'+
+      '<div class="tb"><input class="fi" id="sProj" placeholder="🔍 搜索项目..." value="'+eh(gs.proj)+'" oninput="if(window._imeActive)return;gs.proj=this.value;rfoc(\'sProj\');rpl(document.getElementById(\'main\'))"><input class="fi" type="date" id="dProj" value="'+gd.proj+'" onchange="gd.proj=this.value;rpl(document.getElementById(\'main\'))"><button class="btn btn-pri" onclick="opP()">➕ 新建项目</button></div>'+
       (is.length===0?rem('📝','还没有项目，点击上方按钮创建第一个吧'):
       '<div class="cd" style="padding:0;overflow:hidden"><div class="tbl-w"><table><thead><tr><th>作品类型</th><th>作品名称</th><th>面料</th><th>辅料</th><th>状态</th><th>日期</th><th>操作</th></tr></thead><tbody>'+
       is.map(function(p){
@@ -1527,7 +1527,7 @@ function rpds(m){
   function dr(){
     var is=flt(D.finishedProducts,gs.prod,gd.prod).filter(function(fp){return gs.prodCat==='all'||inferPCat(fp)===gs.prodCat});
     m.innerHTML='<div class="page ac"><div class="pg-hd"><h1 class="pg-tt">🏆 成品库</h1></div>'+
-      '<div class="tb"><input class="fi" id="sProd" placeholder="🔍 搜索成品..." value="'+eh(gs.prod)+'" oninput="gs.prod=this.value;rfoc(\'sProd\');rpds(document.getElementById(\'main\'))"><input class="fi" type="date" id="dProd" value="'+gd.prod+'" onchange="gd.prod=this.value;rpds(document.getElementById(\'main\'))"><button class="btn btn-pri" onclick="opFPNew()">✋ 新建成品</button></div>'+
+      '<div class="tb"><input class="fi" id="sProd" placeholder="🔍 搜索成品..." value="'+eh(gs.prod)+'" oninput="if(window._imeActive)return;gs.prod=this.value;rfoc(\'sProd\');rpds(document.getElementById(\'main\'))"><input class="fi" type="date" id="dProd" value="'+gd.prod+'" onchange="gd.prod=this.value;rpds(document.getElementById(\'main\'))"><button class="btn btn-pri" onclick="opFPNew()">✋ 新建成品</button></div>'+
       '<div class="cat-tbs">'+cats.map(function(c){return '<button class="cat-tb '+(gs.prodCat===c.id?'ac':'')+'" onclick="gs.prodCat=\''+c.id+'\';rpds(document.getElementById(\'main\'))">'+c.em+' '+c.lb+'</button>'}).join('')+'</div>'+
       (is.length===0?rem('📦','该分类下还没有成品，完成项目后会自动归档，也可手动新建成品'):
       '<div class="prod-grid">'+
@@ -1703,7 +1703,7 @@ function rf(m){
 
     m.innerHTML='<div class="page ac"><div class="pg-hd"><h1 class="pg-tt">🧵 布料库</h1></div>'+
       '<div class="cat-tbs">'+cats.map(function(c){return '<button class="cat-tb'+(ac===c?' ac':'')+'" onclick="nv(\'fab\',\''+cids[c]+'\')">'+cics[c]+' '+c+'</button>'}).join('')+'</div>'+
-      '<div class="tb"><input class="fi" id="sFab" placeholder="🔍 搜索布料..." value="'+eh(gs.fab)+'" oninput="gs.fab=this.value;rfoc(\'sFab\');rf(document.getElementById(\'main\'))"><input class="fi" type="date" id="dFab" value="'+gd.fab+'" onchange="gd.fab=this.value;rf(document.getElementById(\'main\'))"><button class="btn btn-pri" onclick="opF(\''+ac+'\')">➕ 新增布料</button></div>'+
+      '<div class="tb"><input class="fi" id="sFab" placeholder="🔍 搜索布料..." value="'+eh(gs.fab)+'" oninput="if(window._imeActive)return;gs.fab=this.value;rfoc(\'sFab\');rf(document.getElementById(\'main\'))"><input class="fi" type="date" id="dFab" value="'+gd.fab+'" onchange="gd.fab=this.value;rf(document.getElementById(\'main\'))"><button class="btn btn-pri" onclick="opF(\''+ac+'\')">➕ 新增布料</button></div>'+
       (is.length===0?rem('🧶','还没有布料记录'):
       '<div class="cd" style="padding:0;overflow:hidden"><div class="tbl-w"><table><thead><tr><th>图片</th><th>名称</th><th>材质</th><th>购买尺寸</th><th>耗用尺寸</th><th>库存尺寸</th><th>价格</th><th>购买途径</th><th>备注</th><th>同步</th><th>操作</th></tr></thead><tbody>'+
       rows.map(function(r){var f=r.item;
@@ -1781,7 +1781,7 @@ function ra(m){
 
     m.innerHTML='<div class="page ac"><div class="pg-hd"><h1 class="pg-tt">🧷 辅料库</h1></div>'+
       '<div class="cat-tbs">'+cats.map(function(c){return '<button class="cat-tb'+(ac===c?' ac':'')+'" onclick="nv(\'acc\',\''+cids[c]+'\')">'+cics[c]+' '+c+'</button>'}).join('')+'</div>'+
-      '<div class="tb"><input class="fi" id="sAcc" placeholder="🔍 搜索辅料..." value="'+eh(gs.acc)+'" oninput="gs.acc=this.value;rfoc(\'sAcc\');ra(document.getElementById(\'main\'))"><input class="fi" type="date" id="dAcc" value="'+gd.acc+'" onchange="gd.acc=this.value;ra(document.getElementById(\'main\'))"><button class="btn btn-pri" onclick="opA(\''+ac+'\')">➕ 新增辅料</button></div>'+
+      '<div class="tb"><input class="fi" id="sAcc" placeholder="🔍 搜索辅料..." value="'+eh(gs.acc)+'" oninput="if(window._imeActive)return;gs.acc=this.value;rfoc(\'sAcc\');ra(document.getElementById(\'main\'))"><input class="fi" type="date" id="dAcc" value="'+gd.acc+'" onchange="gd.acc=this.value;ra(document.getElementById(\'main\'))"><button class="btn btn-pri" onclick="opA(\''+ac+'\')">➕ 新增辅料</button></div>'+
       (is.length===0?rem('🧷','还没有辅料记录'):
       '<div class="cd" style="padding:0;overflow:hidden"><div class="tbl-w"><table><thead><tr><th>图片</th><th>名称</th><th>规格</th><th>购买数量</th><th>耗用数量</th><th>库存数量</th><th>价格</th><th>购买途径</th><th>备注</th><th>同步</th><th>操作</th></tr></thead><tbody>'+
       rows.map(function(r){var a=r.item;
@@ -1846,7 +1846,7 @@ function rt(m){
   function dr(){
     var is=flt(D.tools,gs.tool,gd.tool);
     m.innerHTML='<div class="page ac"><div class="pg-hd"><h1 class="pg-tt">🔧 工具与设备</h1></div>'+
-      '<div class="tb"><input class="fi" id="sTool" placeholder="🔍 搜索工具..." value="'+eh(gs.tool)+'" oninput="gs.tool=this.value;rfoc(\'sTool\');rt(document.getElementById(\'main\'))"><input class="fi" type="date" id="dTool" value="'+gd.tool+'" onchange="gd.tool=this.value;rt(document.getElementById(\'main\'))"><button class="btn btn-pri" onclick="opT()">➕ 新增工具</button></div>'+
+      '<div class="tb"><input class="fi" id="sTool" placeholder="🔍 搜索工具..." value="'+eh(gs.tool)+'" oninput="if(window._imeActive)return;gs.tool=this.value;rfoc(\'sTool\');rt(document.getElementById(\'main\'))"><input class="fi" type="date" id="dTool" value="'+gd.tool+'" onchange="gd.tool=this.value;rt(document.getElementById(\'main\'))"><button class="btn btn-pri" onclick="opT()">➕ 新增工具</button></div>'+
       (is.length===0?rem('🔧','还没有工具设备记录'):
       '<div class="cd" style="padding:0;overflow:hidden"><div class="tbl-w"><table><thead><tr><th>名称</th><th>型号</th><th>数量</th><th>购入价格</th><th>小计</th><th>备注</th><th>日期</th><th>操作</th></tr></thead><tbody>'+
       is.map(function(t){
@@ -1904,7 +1904,7 @@ function rpt(m){
   function dr(){
     var is=flt(D.patterns||[],gs.ptn,gd.ptn);
     m.innerHTML='<div class="page ac"><div class="pg-hd"><h1 class="pg-tt">📐 图纸库</h1></div>'+
-      '<div class="tb"><input class="fi" id="sPtn" placeholder="🔍 搜索图纸..." value="'+eh(gs.ptn)+'" oninput="gs.ptn=this.value;rfoc(\'sPtn\');rpt(document.getElementById(\'main\'))"><input class="fi" type="date" id="dPtn" value="'+gd.ptn+'" onchange="gd.ptn=this.value;rpt(document.getElementById(\'main\'))"><button class="btn btn-pri" onclick="opPT()">➕ 新增图纸</button></div>'+
+      '<div class="tb"><input class="fi" id="sPtn" placeholder="🔍 搜索图纸..." value="'+eh(gs.ptn)+'" oninput="if(window._imeActive)return;gs.ptn=this.value;rfoc(\'sPtn\');rpt(document.getElementById(\'main\'))"><input class="fi" type="date" id="dPtn" value="'+gd.ptn+'" onchange="gd.ptn=this.value;rpt(document.getElementById(\'main\'))"><button class="btn btn-pri" onclick="opPT()">➕ 新增图纸</button></div>'+
       (is.length===0?rem('📐','还没有图纸，点击上方按钮上传第一份图纸'):
       '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px">'+
       is.map(function(p){
