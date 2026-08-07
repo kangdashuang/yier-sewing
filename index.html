@@ -620,8 +620,22 @@ function accConsumed(accId){
 // ============================================================
 // 侧边栏
 // ============================================================
-function tgSide(){var s=document.getElementById('side');var o=document.querySelector('.side-ov');s.classList.toggle('op');o.classList.toggle('sh')}
-function clSide(){document.getElementById('side').classList.remove('op');document.querySelector('.side-ov').classList.remove('sh')}
+function tgSide(){
+  var s=document.getElementById('side');
+  var o=document.querySelector('.side-ov');
+  var h=document.querySelector('.mob-hd');
+  var opened=!s.classList.contains('op');
+  s.classList.toggle('op');
+  o.classList.toggle('sh');
+  // 侧边栏打开时隐藏顶栏（含汉堡按钮），避免按钮溢出到侧边栏造成杂色
+  if(h)h.style.display=opened?'none':'';
+}
+function clSide(){
+  document.getElementById('side').classList.remove('op');
+  document.querySelector('.side-ov').classList.remove('sh');
+  var h=document.querySelector('.mob-hd');
+  if(h)h.style.display='';
+}
 
 var navs=[
   {id:'dash',ic:'📊',lb:'总览工作台',ch:null},
