@@ -1103,7 +1103,7 @@ function rd(m){
   }
   carHTML='<div class="cd dash-car" id="dashCarousel" style="margin-bottom:16px">'+
     '<div class="cd-tt"><span class="em">🎠</span>作品回顾</div>'+
-    '<div style="font-size:13px;color:var(--txt);font-style:italic;line-height:1.7;padding:8px 12px;border-left:3px solid var(--pri-dk);background:linear-gradient(90deg,var(--side-bg),transparent);border-radius:0 8px 8px 0;margin-bottom:12px"><span style="font-style:normal;margin-right:6px">📜</span>'+eh(_maoQuotes[Math.floor(Math.random()*_maoQuotes.length)])+'</div>'+
+    '<div style="font-size:13px;color:var(--txt-lt);font-style:italic;line-height:1.7;margin-top:8px"><span style="font-style:normal;margin-right:4px">📜</span>'+eh(_maoQuotes[Math.floor(Math.random()*_maoQuotes.length)])+'</div>'+
     '<div style="position:relative;border-radius:var(--r-lg);overflow:hidden;background:var(--side-bg);min-height:280px">'+
     carImgs.map(function(im,i){
       var imHTML=im.placeholder?
@@ -1516,39 +1516,50 @@ function rpds(m){
   var cats=[{id:'all',lb:'全部',em:'🏠'},{id:'包包类',lb:'包包类',em:'👜'},{id:'饰品类',lb:'饰品类',em:'🎀'},{id:'服饰类',lb:'服饰类',em:'👗'}];
   function dr(){
     var is=flt(D.finishedProducts,gs.prod,gd.prod).filter(function(fp){return gs.prodCat==='all'||inferPCat(fp)===gs.prodCat});
-    m.innerHTML='<div class="page ac"><div class="pg-hd"><div class="pg-ic">🏆</div><div><h1 class="pg-tt">成品库</h1></div><div class="pg-quote">📜 '+eh(_maoQuotes[Math.floor(Math.random()*_maoQuotes.length)])+'</div></div>'+
-      '<div class="tb"><input class="fi" id="sProd" placeholder="🔍 搜索成品..." value="'+eh(gs.prod)+'" oninput="if(window._imeActive)return;gs.prod=this.value;rfoc(\'sProd\');rpds(document.getElementById(\'main\'))"><input class="fi" type="date" id="dProd" value="'+gd.prod+'" onchange="gd.prod=this.value;rpds(document.getElementById(\'main\'))"><button class="btn btn-pri" onclick="opFPNew()">✋ 新建成品</button></div>'+
+    m.innerHTML='<div class="page ac"><div class="pg-hd"><h1 class="pg-tt">🏆 成品库</h1></div>'+
+      '<div class="tb"><input class="fi" id="sProd" placeholder="🔍 搜索成品..." value="'+eh(gs.prod)+'" oninput="gs.prod=this.value;rfoc(\'sProd\');rpds(document.getElementById(\'main\'))"><input class="fi" type="date" id="dProd" value="'+gd.prod+'" onchange="gd.prod=this.value;rpds(document.getElementById(\'main\'))"><button class="btn btn-pri" onclick="opFPNew()">✋ 新建成品</button></div>'+
       '<div class="cat-tbs">'+cats.map(function(c){return '<button class="cat-tb '+(gs.prodCat===c.id?'ac':'')+'" onclick="gs.prodCat=\''+c.id+'\';rpds(document.getElementById(\'main\'))">'+c.em+' '+c.lb+'</button>'}).join('')+'</div>'+
       (is.length===0?rem('📦','该分类下还没有成品，完成项目后会自动归档，也可手动新建成品'):
-      '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px">'+
+      '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px">'+
       is.map(function(fp){
-        var dest=fp.destination||'自留';
-        var isKeep=dest==='自留';
+        var fbHTML='';
+        if(fp.fabricDetails&&fp.fabricDetails.length){
+          fbHTML='<div style="margin-bottom:6px"><span style="font-size:11px;color:var(--txt-ll)">🧵 面料：</span>'+
+            fp.fabricDetails.map(function(fd){return '<span style="display:inline-block;background:var(--side-bg);padding:2px 8px;border-radius:8px;margin:2px 4px 2px 0;font-size:12px">'+eh(fd.fabricName||'')+(fd.size?' · '+eh(fd.size):'')+'</span>'}).join('')+'</div>';
+        }
+        var acHTML='';
+        if(fp.accessoryDetails&&fp.accessoryDetails.length){
+          acHTML='<div style="margin-bottom:6px"><span style="font-size:11px;color:var(--txt-ll)">🧷 辅料：</span>'+
+            fp.accessoryDetails.map(function(ad){return '<span style="display:inline-block;background:var(--side-bg);padding:2px 8px;border-radius:8px;margin:2px 4px 2px 0;font-size:12px">'+eh(ad.accessoryName||'')+' ×'+eh(ad.quantity||'')+eh(ad.unit||'')+'</span>'}).join('')+'</div>';
+        }
+        var pjLabel=fp.projectId?'<span style="font-size:9px;color:var(--txt-ll);margin-top:6px">📋 项目归档</span>':'<span style="font-size:9px;color:var(--txt-ll);margin-top:6px">✋ 手工录入</span>';
         var validImgs=(fp.images||[]).filter(function(img){return isValidDataUrl(img)});
-        // 多图横滚：所有图片都展示（最一开始第一版）
-        var imgGallery=validImgs.length?
-          '<div style="position:relative;display:flex;gap:6px;padding:8px;background:var(--side-bg);flex-shrink:0;overflow-x:auto" onclick="event.stopPropagation()">'+
-            validImgs.map(function(img){return '<img src="'+img+'" style="width:100%;max-width:160px;height:140px;object-fit:cover;border-radius:10px;flex-shrink:0;cursor:pointer" onclick="shLb(this.src)">'}).join('')+
-            '<div style="position:absolute;left:14px;bottom:14px;background:rgba(77,66,56,.75);color:#fff;font-size:11px;padding:2px 10px;border-radius:10px">📷 '+validImgs.length+' 张</div>'+
-            '<div class="stamp stamp-'+(isKeep?'keep':'gift')+'" style="position:absolute;right:14px;bottom:14px"><div class="stamp-box" style="width:42px;height:42px"><div class="stamp-icon" style="font-size:14px">'+(isKeep?'💖':'🎁')+'</div><div class="stamp-tx" style="font-size:9px">'+dest+'</div></div></div>'+
-          '</div>':
-          '<div style="position:relative;height:140px;background:linear-gradient(135deg,var(--side-bg),var(--bd-lt));display:flex;align-items:center;justify-content:center;color:var(--txt-ll);font-size:13px;flex-shrink:0">📷 暂无图片'+
-            '<div class="stamp stamp-'+(isKeep?'keep':'gift')+'" style="position:absolute;right:14px;top:14px"><div class="stamp-box" style="width:42px;height:42px"><div class="stamp-icon" style="font-size:14px">'+(isKeep?'💖':'🎁')+'</div><div class="stamp-tx" style="font-size:9px">'+dest+'</div></div></div>'+
-          '</div>';
-        return '<div class="cd" style="padding:0;overflow:hidden;display:flex;flex-direction:column">'+
-          imgGallery+
-          '<div style="padding:12px 14px;flex:1">'+
-            '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><span class="tag tag-pd" style="font-size:11px">'+eh(inferPCat(fp)||'—')+'</span>'+
-              '<span style="font-weight:700;font-size:15px;color:var(--txt);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+eh(fp.projectType||'未命名作品')+'</span>'+
-            '</div>'+
-            '<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 10px;font-size:12px;color:var(--txt-lt);margin-bottom:8px">'+
-              '<div>📐 '+eh(fp.size||'—')+'</div>'+
-              '<div>📅 '+eh(fp.completionDate||'—')+'</div>'+
-              '<div>⏱ '+eh(fp.duration||'—')+'</div>'+
-              '<div>📋 '+(fp.projectId?'项目归档':'✋ 手工录入')+'</div>'+
-            '</div>'+
-            '<div style="display:flex;gap:6px"><button class="btn btn-sm" style="flex:1;justify-content:center" onclick="edFP(\''+fp.id+'\')">✏️ 编辑</button><button class="btn btn-sm btn-dg" style="flex:1;justify-content:center" onclick="dlFP(\''+fp.id+'\')">🗑️ 删除</button></div>'+
-          '</div></div>';
+        var imgHTML=validImgs.length?'<div style="display:flex;gap:6px;margin-bottom:10px;overflow-x:auto;flex-wrap:wrap;position:relative">'+validImgs.map(function(img){return '<img src="'+img+'" style="width:100px;height:100px;object-fit:cover;border-radius:12px;cursor:pointer" onclick="shLb(this.src)" onerror="this.style.display=\'none\'">'}).join('')+
+          // 印章：叠在图片右下角
+          (function(){
+            var dest=fp.destination||'自留';
+            var isKeep=dest==='自留';
+            return '<div class="stamp stamp-'+(isKeep?'keep':'gift')+'" style="position:absolute;right:6px;bottom:6px"><div class="stamp-box">'+
+              '<div class="stamp-icon">'+(isKeep?'💖':'🎁')+'</div>'+
+              '<div class="stamp-tx">'+dest+'</div>'+
+              '</div></div>';
+          })()
+        +'</div>':'<div style="text-align:center;padding:20px;color:var(--txt-ll);position:relative">📷 暂无图片'+
+          (function(){
+            var dest=fp.destination||'自留';
+            var isKeep=dest==='自留';
+            return '<div class="stamp stamp-'+(isKeep?'keep':'gift')+'" style="position:absolute;right:10px;top:10px"><div class="stamp-box">'+
+              '<div class="stamp-icon">'+(isKeep?'🏠':'🎁')+'</div>'+
+              '<div class="stamp-tx">'+dest+'</div>'+
+              '</div></div>';
+          })()
+        +'</div>';
+        return '<div class="cd">'+imgHTML+
+          '<div class="cd-tt"><span class="em">'+catEm(inferPCat(fp))+'</span>'+eh(fp.projectType||'未知作品')+'</div>'+
+          '<div style="font-size:13px;color:var(--txt-lt);line-height:1.8"><div><span class="tag tag-pd">'+eh(inferPCat(fp)||'—')+'</span></div><div>📐 尺寸：'+eh(fp.size||'—')+'</div><div>📅 完成：'+(fp.completionDate||'—')+'</div><div>⏱ 时长：'+eh(fp.duration||'—')+'</div>'+
+          fbHTML+acHTML+
+          (fp.notes?'<div style="margin-top:8px;padding:8px 12px;background:var(--side-bg);border-radius:10px;font-size:12px">💬 '+eh(fp.notes)+'</div>':'')+pjLabel+'</div>'+
+          '<div style="margin-top:10px;display:flex;gap:6px"><button class="btn btn-sm" onclick="edFP(\''+fp.id+'\')">✏️ 编辑</button><button class="btn btn-sm btn-dg" onclick="dlFP(\''+fp.id+'\')">🗑️ 删除</button></div></div>'
       }).join('')+'</div>')+'</div>';
   }
   dr();
