@@ -1005,7 +1005,8 @@ function rd(m){
   var fc=D.fabrics.reduce(function(s,f){return s+(parseFloat(f.purchasePrice)||0)},0);
   var ac=D.accessories.reduce(function(s,a){return s+(parseFloat(a.purchasePrice)||0)},0);
   var tc=D.tools.reduce(function(s,t){return s+(parseFloat(t.price)||0)*(t.quantity||1)},0);
-  var total=fc+ac+tc;
+  var ptc=(D.patterns||[]).reduce(function(s,p){return s+(parseFloat(p.price)||0)},0);
+  var total=fc+ac+tc+ptc;
 
   // 按作品类型细分
   function stByType(arr,getter){getter=getter||inferCat;return{bag:arr.filter(function(p){return getter(p)==='包包类'}).length,jewelry:arr.filter(function(p){return getter(p)==='饰品类'}).length,cloth:arr.filter(function(p){return getter(p)==='服饰类'}).length}}
@@ -1053,7 +1054,7 @@ function rd(m){
     '<div class="st-cd" onclick="nv(\'proj\',\'proj-list\')"><div class="st-ic">📌</div><div class="st-vl">'+pc+'</div><div class="st-lb">待办任务数</div>'+stTypeH(sP.bag,sP.jewelry,sP.cloth)+'</div>'+
     '<div class="st-cd" onclick="nv(\'proj\',\'proj-list\')"><div class="st-ic">🌀</div><div class="st-vl">'+ic+'</div><div class="st-lb">进行任务数</div>'+stTypeH(iP.bag,iP.jewelry,iP.cloth)+'</div>'+
     '<div class="st-cd" onclick="nv(\'proj\',\'prod-list\')"><div class="st-ic">🏆</div><div class="st-vl">'+dc+'</div><div class="st-lb">完成作品数</div>'+stTypeH(dP.bag,dP.jewelry,dP.cloth)+'</div>'+
-    '<div class="st-cd" onclick="nv(\'cost\')"><div class="st-ic">💰</div><div class="st-vl">¥'+total.toFixed(0)+'</div><div class="st-lb">总花费</div><div style="margin-top:6px;font-size:11px;color:var(--txt-lt);text-align:center">布料+辅料+工具</div></div></div>'+
+    '<div class="st-cd" onclick="nv(\'cost\')"><div class="st-ic">💰</div><div class="st-vl">¥'+total.toFixed(0)+'</div><div class="st-lb">总花费</div><div style="margin-top:6px;font-size:11px;color:var(--txt-lt);text-align:center">布料+辅料+工具+图纸</div></div></div>'+
     '<div class="cd dash-ql"><div class="cd-tt"><span class="em">⚡</span>快捷入口</div><div class="ql">'+
     '<div class="ql-i" onclick="nv(\'proj\',\'proj-list\')"><span class="ql-ic">📝</span>新建项目</div>'+
     '<div class="ql-i" onclick="nv(\'fab\',\'fab-outer\')"><span class="ql-ic">🧵</span>布料仓库</div>'+
@@ -1913,10 +1914,12 @@ function rc(m){
 
   // 工具
   var toolC=D.tools.reduce(function(s,t){return s+(parseFloat(t.price)||0)*(t.quantity||1)},0);
-  var total=fabC+accC+toolC;
+  // 图纸库
+  var patternC=(D.patterns||[]).reduce(function(s,p){return s+(parseFloat(p.price)||0)},0);
+  var total=fabC+accC+toolC+patternC;
 
   m.innerHTML='<div class="page ac"><div class="pg-hd"><h1 class="pg-tt">💰 成本花费</h1></div>'+
-    '<div class="st-cds" style="grid-template-columns:1fr"><div class="st-cd" style="background:linear-gradient(135deg,var(--side-bg),var(--card))"><div class="st-ic">💎</div><div class="st-vl">¥'+total.toFixed(2)+'</div><div class="st-lb">总成本（布料 + 辅料 + 工具设备）</div></div></div>'+
+    '<div class="st-cds" style="grid-template-columns:1fr"><div class="st-cd" style="background:linear-gradient(135deg,var(--side-bg),var(--card))"><div class="st-ic">💎</div><div class="st-vl">¥'+total.toFixed(2)+'</div><div class="st-lb">总成本（布料 + 辅料 + 工具设备 + 图纸）</div></div></div>'+
     '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:20px;margin-top:20px">'+
 
     '<div class="cd"><div class="cd-tt"><span class="em">🧵</span>布料总花费 <span class="amt" style="margin-left:auto">¥'+fabC.toFixed(2)+'</span></div>'+
@@ -1927,6 +1930,9 @@ function rc(m){
 
     '<div class="cd"><div class="cd-tt"><span class="em">🔧</span>工具与设备总花费 <span class="amt" style="margin-left:auto">¥'+toolC.toFixed(2)+'</span></div>'+
     '<div class="dl">'+(D.tools.length===0?rem('🔧','暂无工具记录').replace('<div class="cd">','').replace('</div>',''):D.tools.map(function(t){return '<div class="dl-i"><span>🔧 '+eh(t.name)+' '+(t.model?'('+eh(t.model)+')':'')+' ×'+(t.quantity||1)+(t.notes?' <span style="color:var(--txt-ll);font-size:11px">· '+eh(t.notes)+'</span>':'')+'</span><span class="amt">¥'+((parseFloat(t.price)||0)*(t.quantity||1)).toFixed(2)+'</span></div>'}).join(''))+'</div></div>'+
+
+    '<div class="cd"><div class="cd-tt"><span class="em">📐</span>图纸库总花费 <span class="amt" style="margin-left:auto">¥'+patternC.toFixed(2)+'</span></div>'+
+    '<div class="dl">'+((!D.patterns||D.patterns.length===0)?rem('📐','暂无图纸记录').replace('<div class="cd">','').replace('</div>',''):D.patterns.map(function(p){return '<div class="dl-i"><span>📐 '+eh(p.name)+(p.purchaseSource?' <span style="color:var(--txt-ll);font-size:11px">· '+eh(p.purchaseSource)+'</span>':'')+'</span><span class="amt">¥'+(parseFloat(p.price)||0).toFixed(2)+'</span></div>'}).join(''))+'</div></div>'+
     '</div></div>';
 }
 
