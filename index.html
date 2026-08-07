@@ -72,7 +72,7 @@ input,select,textarea{font-family:inherit;font-size:inherit}
 @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 
 /* ===== 标题（白卡+圆形图标） ===== */
-.pg-hd{margin-bottom:18px;background:linear-gradient(180deg,var(--card),var(--card-hover));border-radius:var(--r-lg);padding:16px 20px;box-shadow:var(--sh);border:1px solid var(--bd-lt);display:flex;align-items:center;gap:12px;flex-wrap:wrap}.pg-hd .pg-quote{flex-basis:100%;margin:0;padding:6px 0 0;border-top:1px dashed var(--bd-lt);font-size:12px;color:var(--txt-lt);font-style:italic;line-height:1.6;box-shadow:none}.pg-hd .pg-ic{width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,var(--pri-lt),var(--pri-dk));display:inline-flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;color:#fff}.pg-hd .pg-tt{font-size:18px;font-weight:700;color:var(--txt);margin:0;letter-spacing:.02em}
+.pg-hd{margin-bottom:18px;background:linear-gradient(180deg,var(--card),var(--card-hover));border-radius:var(--r-lg);padding:14px 18px;box-shadow:none;border:1px solid var(--bd-lt);display:flex;align-items:center;gap:10px;flex-wrap:wrap}.pg-hd .pg-quote{flex-basis:100%;margin:0;padding:6px 0 0;border-top:1px dashed var(--bd-lt);font-size:12px;color:var(--txt-lt);font-style:italic;line-height:1.6;box-shadow:none;background:none}.pg-hd .pg-ic{font-size:22px;flex-shrink:0;line-height:1;background:none;box-shadow:none}.pg-hd .pg-tt{font-size:18px;font-weight:700;color:var(--txt);margin:0;letter-spacing:.02em}
 .pg-ic{width:36px;height:36px;border-radius:50%;background:#f2ebe1;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
 .pg-tt{font-weight:500;font-size:16px;color:var(--pri-dk);letter-spacing:.02em;margin:0}
 .pg-sub{font-size:13px;color:var(--txt-lt);font-weight:350}
@@ -1124,9 +1124,7 @@ function rd(m){
   var greetTxt,greetEm;
   if(hr<5){greetEm='🌙';greetTxt='夜深了'}else if(hr<11){greetEm='🌅';greetTxt='早上好'}else if(hr<14){greetEm='☀️';greetTxt='中午好'}else if(hr<18){greetEm='🍵';greetTxt='下午好'}else{greetEm='🌆';greetTxt='晚上好'}
 
-  m.innerHTML='<div class="page ac"><div class="pg-hd" style="background-size:cover,cover;background-position:right center;"><div class="pg-ic">📊</div><div><h1 class="pg-tt">总览工作台</h1></div></div>'+
-    // 极简问候小条
-    '<div class="greet" style="background-size:cover,cover;background-position:right center;background-repeat:no-repeat,no-repeat;"><div class="greet-ic">'+greetEm+'</div><<div class="greet-tx"><b>'+greetTxt+'，一二</b>今天想做点什么？</div></div>'+
+  m.innerHTML='<div class="page ac"><div class="pg-hd"><div class="pg-ic">📊</div><div><h1 class="pg-tt">总览工作台</h1></div></div>'+
     carHTML+
     '<div class="st-cds">'+
     '<div class="st-cd" onclick="nv(\'proj\',\'proj-list\')"><div class="st-ic">📌</div><div class="st-vl">'+pc+'</div><div class="st-lb">待办任务数</div>'+stTypeH(sP.bag,sP.jewelry,sP.cloth)+'</div>'+
@@ -1527,30 +1525,29 @@ function rpds(m){
         var dest=fp.destination||'自留';
         var isKeep=dest==='自留';
         var validImgs=(fp.images||[]).filter(function(img){return isValidDataUrl(img)});
-        // 单张大图：第一张 + 右下角印章
-        var imgHTML=validImgs.length?
-          '<div style="position:relative;height:200px;background:var(--side-bg);flex-shrink:0;overflow:hidden">'+
-            '<img src="'+validImgs[0]+'" style="width:100%;height:100%;object-fit:cover;cursor:pointer" onclick="shLb(this.src)" onerror="this.style.display=\'none\'">'+
-            '<div class="stamp stamp-'+(isKeep?'keep':'gift')+'" style="position:absolute;right:10px;bottom:10px"><div class="stamp-box" style="width:46px;height:46px"><div class="stamp-icon" style="font-size:15px">'+(isKeep?'💖':'🎁')+'</div><div class="stamp-tx" style="font-size:9px">'+dest+'</div></div></div>'+
-            (validImgs.length>1?'<div style="position:absolute;left:10px;bottom:10px;background:rgba(77,66,56,.7);color:#fff;font-size:11px;padding:2px 8px;border-radius:10px">📷 '+validImgs.length+' 张</div>':'')+
+        // 多图横滚：所有图片都展示（最一开始第一版）
+        var imgGallery=validImgs.length?
+          '<div style="position:relative;display:flex;gap:6px;padding:8px;background:var(--side-bg);flex-shrink:0;overflow-x:auto" onclick="event.stopPropagation()">'+
+            validImgs.map(function(img){return '<img src="'+img+'" style="width:100%;max-width:160px;height:140px;object-fit:cover;border-radius:10px;flex-shrink:0;cursor:pointer" onclick="shLb(this.src)">'}).join('')+
+            '<div style="position:absolute;left:14px;bottom:14px;background:rgba(77,66,56,.75);color:#fff;font-size:11px;padding:2px 10px;border-radius:10px">📷 '+validImgs.length+' 张</div>'+
+            '<div class="stamp stamp-'+(isKeep?'keep':'gift')+'" style="position:absolute;right:14px;bottom:14px"><div class="stamp-box" style="width:42px;height:42px"><div class="stamp-icon" style="font-size:14px">'+(isKeep?'💖':'🎁')+'</div><div class="stamp-tx" style="font-size:9px">'+dest+'</div></div></div>'+
           '</div>':
-          '<div style="position:relative;height:200px;background:linear-gradient(135deg,var(--side-bg),var(--bd-lt));display:flex;align-items:center;justify-content:center;color:var(--txt-ll);font-size:14px;flex-shrink:0">📷 暂无图片'+
-            '<div class="stamp stamp-'+(isKeep?'keep':'gift')+'" style="position:absolute;right:10px;top:10px"><div class="stamp-box" style="width:46px;height:46px"><div class="stamp-icon" style="font-size:15px">'+(isKeep?'💖':'🎁')+'</div><div class="stamp-tx" style="font-size:9px">'+dest+'</div></div></div>'+
+          '<div style="position:relative;height:140px;background:linear-gradient(135deg,var(--side-bg),var(--bd-lt));display:flex;align-items:center;justify-content:center;color:var(--txt-ll);font-size:13px;flex-shrink:0">📷 暂无图片'+
+            '<div class="stamp stamp-'+(isKeep?'keep':'gift')+'" style="position:absolute;right:14px;top:14px"><div class="stamp-box" style="width:42px;height:42px"><div class="stamp-icon" style="font-size:14px">'+(isKeep?'💖':'🎁')+'</div><div class="stamp-tx" style="font-size:9px">'+dest+'</div></div></div>'+
           '</div>';
         return '<div class="cd" style="padding:0;overflow:hidden;display:flex;flex-direction:column">'+
-          imgHTML+
-          '<div style="padding:14px;flex:1">'+
+          imgGallery+
+          '<div style="padding:12px 14px;flex:1">'+
             '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><span class="tag tag-pd" style="font-size:11px">'+eh(inferPCat(fp)||'—')+'</span>'+
               '<span style="font-weight:700;font-size:15px;color:var(--txt);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+eh(fp.projectType||'未命名作品')+'</span>'+
             '</div>'+
-            '<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 10px;font-size:12px;color:var(--txt-lt);margin-bottom:10px">'+
+            '<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 10px;font-size:12px;color:var(--txt-lt);margin-bottom:8px">'+
               '<div>📐 '+eh(fp.size||'—')+'</div>'+
               '<div>📅 '+eh(fp.completionDate||'—')+'</div>'+
               '<div>⏱ '+eh(fp.duration||'—')+'</div>'+
               '<div>📋 '+(fp.projectId?'项目归档':'✋ 手工录入')+'</div>'+
             '</div>'+
-            (fp.notes?'<div style="margin-top:6px;margin-bottom:10px;padding:8px 12px;background:var(--side-bg);border-radius:10px;font-size:12px;color:var(--txt)">💬 '+eh(fp.notes).slice(0,80)+(fp.notes.length>80?'…':'')+'</div>':'')+
-            '<div style="margin-top:10px;display:flex;gap:6px"><button class="btn btn-sm" style="flex:1;justify-content:center" onclick="edFP(\''+fp.id+'\')">✏️ 编辑</button><button class="btn btn-sm btn-dg" style="flex:1;justify-content:center" onclick="dlFP(\''+fp.id+'\')">🗑️ 删除</button></div>'+
+            '<div style="display:flex;gap:6px"><button class="btn btn-sm" style="flex:1;justify-content:center" onclick="edFP(\''+fp.id+'\')">✏️ 编辑</button><button class="btn btn-sm btn-dg" style="flex:1;justify-content:center" onclick="dlFP(\''+fp.id+'\')">🗑️ 删除</button></div>'+
           '</div></div>';
       }).join('')+'</div>')+'</div>';
   }
