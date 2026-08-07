@@ -464,6 +464,7 @@ async function syncCloud(force){
 }
 
 function sv(d){
+  _userEdited = true; // 标记用户已操作
   try{
     svLocal(d);
   }catch(e){
@@ -518,9 +519,11 @@ function subCloud(){
 
 var D = ld();
 var _initSyncDone = false;
+var _userEdited = false; // 用户是否已开始操作（防止 IndexedDB 旧数据覆盖新改动）
 // 启动时异步读取 IndexedDB（大容量主存储），如有更新数据则覆盖本地
 (function(){
   idbGet('main').then(function(json){
+    if(_userEdited) return; // 用户已开始操作，跳过覆盖
     if(json && typeof json === 'string'){
       try{
         var idbData = JSON.parse(json);
@@ -938,7 +941,10 @@ function rem(ic,tx){return '<div class="cd"><div class="emp"><div class="emp-ic"
 // ============================================================
 function rp(){
   carStop();
-  D=ld();var m=document.getElementById('main');
+  // 注意：不要用 D=ld() 覆盖内存数据！
+  // localStorage 可能因已满而比内存旧（IndexedDB 兜底方案下），
+  // 内存中的 D 始终是最新数据（所有修改都先改 D 再 sv）
+  var m=document.getElementById('main');
   switch(cp){
     case'dash':rd(m);break;
     case'proj':csp==='prod-list'?rpds(m):rpl(m);break;
@@ -1925,7 +1931,7 @@ function openDataManage(){
 }
 
 function backupData(){
-  D=ld();
+  // 直接使用内存中的 D（最新数据），不要用 ld() 覆盖（localStorage 可能比内存旧）
   var json=JSON.stringify(D,null,2);
   var now=new Date();
   var fname='工作台数据_'+now.getFullYear()+'-'+('0'+(now.getMonth()+1)).slice(-2)+'-'+('0'+now.getDate()).slice(-2)+'.json';
@@ -1942,7 +1948,7 @@ function backupData(){
 }
 
 function exportData(){
-  D=ld(); // 确保最新数据
+  // 直接使用内存中的 D（最新数据）
   var json=JSON.stringify(D,null,2);
   var blob=new Blob([json],{type:'application/json'});
   var url=URL.createObjectURL(blob);
