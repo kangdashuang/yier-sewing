@@ -1943,28 +1943,10 @@ function openDataManage(){
   shMo('💾 数据管理',
     '<div style="padding:8px 0"><p style="font-size:14px;color:var(--txt-lt);margin-bottom:16px">管理工作台全部数据的安全备份与恢复</p>'+
     '<div class="dm-cd">'+
-    '<button class="btn" style="flex:1;justify-content:center" onclick="clMo();backupData()">📋 数据备份</button>'+
     '<button class="btn btn-pri" style="flex:1;justify-content:center" onclick="clMo();exportData()">📤 导出数据</button>'+
     '<button class="btn" style="flex:1;justify-content:center" onclick="document.getElementById(\'importFile\').click()">📥 导入数据</button>'+
     '<input type="file" id="importFile" class="fui" accept=".json" onchange="importData(this)">'+
     '</div></div>');
-}
-
-function backupData(){
-  // 直接使用内存中的 D（最新数据），不要用 ld() 覆盖（localStorage 可能比内存旧）
-  var json=JSON.stringify(D,null,2);
-  var now=new Date();
-  var fname='工作台数据_'+now.getFullYear()+'-'+('0'+(now.getMonth()+1)).slice(-2)+'-'+('0'+now.getDate()).slice(-2)+'.json';
-  var stat='<div style="font-size:13px;color:var(--txt-lt);margin-bottom:10px;line-height:1.8">'+
-    '<div>📋 文件名：<b>'+fname+'</b></div>'+
-    '<div>📊 项目：'+(D.projects?D.projects.length:0)+' 条 | 🏆 成品：'+(D.finishedProducts?D.finishedProducts.length:0)+' 条</div>'+
-    '<div>🧵 布料：'+(D.fabrics?D.fabrics.length:0)+' 条 | 🧷 辅料：'+(D.accessories?D.accessories.length:0)+' 条</div>'+
-    '<div>🔧 工具：'+(D.tools?D.tools.length:0)+' 条 | 📐 图纸：'+(D.patterns?D.patterns.length:0)+' 条</div>'+
-    '<div>📝 动态：'+(D.activities?D.activities.length:0)+' 条</div>'+
-    '<div>📦 数据大小：'+(json.length<1024?json.length+' B':json.length<1048576?(json.length/1024).toFixed(1)+' KB':(json.length/1048576).toFixed(1)+' MB')+'</div></div>';
-  shMo('📋 数据备份',
-    stat+'<div style="background:var(--side-bg);border-radius:var(--r);padding:12px;max-height:240px;overflow-y:auto;font-family:monospace;font-size:11px;white-space:pre-wrap;word-break:break-all;color:var(--txt);border:1px solid var(--bd-lt)">'+eh(json)+'</div>',
-    '<button class="btn" onclick="clMo()">关闭</button>');
 }
 
 function exportData(){
